@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle, MapPin, Navigation } from 'lucide-react';
-import { Container } from '../services/api';
+import type { Container } from '../services/api';
 
 interface AlertListProps {
   containers: Container[];

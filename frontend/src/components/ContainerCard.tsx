@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, Activity, AlertCircle } from 'lucide-react';
-import { Container, getStatusBadge, getStatusText } from '../services/api';
+import type { Container } from '../services/api';
+import { getStatusBadge, getStatusText } from '../services/api';
 
 interface ContainerCardProps {
   container: Container;

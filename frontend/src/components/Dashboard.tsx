@@ -5,7 +5,7 @@ import StatisticsPanel from './StatisticsPanel';
 import ContainerCard from './ContainerCard';
 import AlertList from './AlertList';
 import ContainerDetails from './ContainerDetails';
-import { Container } from '../services/api';
+import type { Container } from '../services/api';
 
 type FilterType = 'all' | 'critical' | 'warning' | 'normal';
 

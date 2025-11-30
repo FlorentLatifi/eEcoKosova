@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getAllContainers, updateFillLevel, Container } from '../services/api';
+import { getAllContainers, updateFillLevel } from '../services/api';
+import type { Container } from '../services/api';
 
 interface Statistics {
   total: number;

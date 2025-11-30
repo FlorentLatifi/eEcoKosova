@@ -1,41 +1,61 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  body {
-    @apply bg-gray-50 text-gray-900;
-    margin: 0;
-    padding: 0;
-  }
+@theme {
+  --color-eco-green: #10B981;
+  --color-eco-amber: #F59E0B;
+  --color-eco-red: #EF4444;
+  --color-eco-blue: #3B82F6;
+  --color-eco-gray: #6B7280;
 }
 
-@layer components {
-  .card {
-    @apply bg-white rounded-lg shadow-md p-6;
-  }
-  
-  .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
-  }
-  
-  .btn-primary {
-    @apply btn bg-eco-blue text-white hover:bg-blue-600;
-  }
-  
-  .badge {
-    @apply px-3 py-1 rounded-full text-sm font-semibold;
-  }
-  
-  .badge-success {
-    @apply badge bg-green-100 text-green-800;
-  }
-  
-  .badge-warning {
-    @apply badge bg-amber-100 text-amber-800;
-  }
-  
-  .badge-danger {
-    @apply badge bg-red-100 text-red-800;
-  }
+body {
+  margin: 0;
+  padding: 0;
+  background-color: rgb(249 250 251);
+  color: rgb(17 24 39);
+}
+
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  padding: 1.5rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--color-eco-blue);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: rgb(37 99 235);
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.badge-success {
+  background-color: rgb(220 252 231);
+  color: rgb(22 101 52);
+}
+
+.badge-warning {
+  background-color: rgb(254 243 199);
+  color: rgb(146 64 14);
+}
+
+.badge-danger {
+  background-color: rgb(254 226 226);
+  color: rgb(153 27 27);
 }

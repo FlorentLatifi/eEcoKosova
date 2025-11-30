@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, MapPin, Activity, Calendar, Trash2 } from 'lucide-react';
-import { Container, updateFillLevel } from '../services/api';
+import type { Container } from '../services/api';
+import { updateFillLevel } from '../services/api';
 
 interface ContainerDetailsProps {
   container: Container;
