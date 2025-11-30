@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,7 +34,37 @@ public class JsonDataManager {
      * Constructor me directory default
      */
     public JsonDataManager() {
-        this("backend/src/main/resources/data");
+        this(getResourcesDataPath());
+    }
+    
+    /**
+     * Merr path-in e resources/data directory
+     */
+    private static String getResourcesDataPath() {
+        try {
+            // Provoj të lexoj nga classpath/resources
+            java.net.URL resourceUrl = JsonDataManager.class.getClassLoader()
+                .getResource("data");
+            
+            if (resourceUrl != null && "file".equals(resourceUrl.getProtocol())) {
+                return new java.io.File(resourceUrl.toURI()).getAbsolutePath();
+            }
+            
+            // Fallback: përdor path relativ bazuar në working directory
+            String workingDir = System.getProperty("user.dir");
+            String path = Paths.get(workingDir, "backend", "src", "main", "resources", "data").toString();
+            
+            // Provoj edhe direkt nga resources nëse aplikacioni është i startuar nga target
+            String altPath = Paths.get(workingDir, "src", "main", "resources", "data").toString();
+            if (Files.exists(Paths.get(altPath))) {
+                return altPath;
+            }
+            
+            return path;
+        } catch (Exception e) {
+            // Fallback: path default
+            return Paths.get(System.getProperty("user.dir"), "backend", "src", "main", "resources", "data").toString();
+        }
     }
     
     /**
@@ -59,6 +90,20 @@ public class JsonDataManager {
     public <T> List<T> readList(String filename, Type typeToken) {
         lock.readLock().lock();
         try {
+            // Provoj të lexoj nga classpath/resources së pari
+            InputStream resourceStream = JsonDataManager.class.getClassLoader()
+                .getResourceAsStream("data/" + filename);
+            
+            if (resourceStream != null) {
+                try (Reader reader = new InputStreamReader(resourceStream, StandardCharsets.UTF_8)) {
+                    List<T> data = gson.fromJson(reader, typeToken);
+                    logger.info(String.format("Loaded %d items from classpath: data/%s", 
+                        data != null ? data.size() : 0, filename));
+                    return data != null ? data : new ArrayList<>();
+                }
+            }
+            
+            // Fallback: lexo nga file system
             Path filePath = Paths.get(dataDirectory, filename);
             
             if (!Files.exists(filePath)) {
@@ -68,12 +113,17 @@ public class JsonDataManager {
             
             try (Reader reader = new FileReader(filePath.toFile())) {
                 List<T> data = gson.fromJson(reader, typeToken);
+                logger.info(String.format("Loaded %d items from file: %s", 
+                    data != null ? data.size() : 0, filePath));
                 return data != null ? data : new ArrayList<>();
             } catch (IOException e) {
                 logger.severe(String.format("Error reading file %s: %s", filename, e.getMessage()));
                 return new ArrayList<>();
             }
             
+        } catch (Exception e) {
+            logger.severe(String.format("Error reading %s: %s", filename, e.getMessage()));
+            return new ArrayList<>();
         } finally {
             lock.readLock().unlock();
         }
