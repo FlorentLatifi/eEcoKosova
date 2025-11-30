@@ -1,0 +1,41 @@
+[
+  {
+    "id": "ZONE-001",
+    "name": "Qendra e Prishtinës",
+    "status": "CRITICAL",
+    "municipality": "Prishtinë",
+    "description": "Zona qendrore e Prishtinës me trafikë të lartë",
+    "criticalThreshold": 50,
+    "latitude": 42.6629,
+    "longitude": 21.1655,
+    "containerIds": ["CONT-001", "CONT-002", "CONT-003"],
+    "createdAt": "2024-01-10T09:00:00.000Z",
+    "modifiedAt": "2024-11-30T11:15:00.000Z"
+  },
+  {
+    "id": "ZONE-002",
+    "name": "Zona Industriale",
+    "status": "CRITICAL",
+    "municipality": "Prishtinë",
+    "description": "Zona industriale me prodhim të lartë mbetjesh",
+    "criticalThreshold": 60,
+    "latitude": 42.6729,
+    "longitude": 21.1755,
+    "containerIds": ["CONT-004", "CONT-005"],
+    "createdAt": "2024-01-15T09:00:00.000Z",
+    "modifiedAt": "2024-11-30T11:30:00.000Z"
+  },
+  {
+    "id": "ZONE-003",
+    "name": "Lagjja Arbëria",
+    "status": "ACTIVE",
+    "municipality": "Prishtinë",
+    "description": "Zonë banimi me densitet mesatar",
+    "criticalThreshold": 50,
+    "latitude": 42.6519,
+    "longitude": 21.1545,
+    "containerIds": ["CONT-006"],
+    "createdAt": "2024-01-20T09:00:00.000Z",
+    "modifiedAt": "2024-11-30T08:30:00.000Z"
+  }
+]
