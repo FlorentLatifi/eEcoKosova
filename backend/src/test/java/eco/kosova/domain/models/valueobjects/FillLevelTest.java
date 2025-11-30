@@ -82,3 +82,4 @@ class FillLevelTest {
         assertEquals("EMPTY", new FillLevel(5).getStatusText());
     }
 }
+

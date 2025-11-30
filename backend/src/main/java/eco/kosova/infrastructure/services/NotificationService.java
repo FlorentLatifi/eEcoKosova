@@ -1,59 +1,39 @@
-package eco.kosova.infrastructure.events;
+package eco.kosova.infrastructure.services;
 
-import eco.kosova.domain.events.CollectionScheduledEvent;
-import eco.kosova.infrastructure.services.NotificationService;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.logging.Logger;
 
 /**
- * Event Handler për CollectionScheduledEvent.
+ * Service për dërgimin e njoftimeve.
  */
-@Component
-public class CollectionScheduledEventHandler {
+@Service
+public class NotificationService {
     
-    private static final Logger logger = Logger.getLogger(
-        CollectionScheduledEventHandler.class.getName()
-    );
+    private static final Logger logger = Logger.getLogger(NotificationService.class.getName());
     
-    private final NotificationService notificationService;
-    
-    public CollectionScheduledEventHandler(NotificationService notificationService) {
-        this.notificationService = notificationService;
+    /**
+     * Dërgon një alarm kritik kur një kontejner është plot.
+     */
+    public void sendCriticalAlert(String containerId, String zoneId, int fillLevel) {
+        String message = String.format(
+            "🚨 ALERT: Container %s në zonë %s ka arritur %d%% kapacitet!",
+            containerId, zoneId, fillLevel
+        );
+        logger.warning(message);
+        // Në realitet, këtu do të dërgohej email/SMS për operatorët
     }
     
-    @Async
-    @EventListener
-    public void handle(CollectionScheduledEvent event) {
-        logger.info(String.format(
-            "Handling CollectionScheduledEvent: container=%s, zone=%s, scheduled=%s",
-            event.getContainerId(),
-            event.getZoneId(),
-            event.getScheduledTime()
-        ));
-        
-        try {
-            // Dërgo njoftim për operatorët
-            notificationService.sendCollectionScheduledNotification(
-                event.getContainerId(),
-                event.getZoneId(),
-                event.getScheduledTime()
-            );
-            
-            // Log
-            logger.info(String.format(
-                "📅 Collection scheduled for container %s at %s",
-                event.getContainerId(),
-                event.getScheduledTime()
-            ));
-            
-        } catch (Exception e) {
-            logger.severe(String.format(
-                "Error handling CollectionScheduledEvent: %s",
-                e.getMessage()
-            ));
-        }
+    /**
+     * Dërgon njoftim kur është planifikuar mbledhje.
+     */
+    public void sendCollectionScheduledNotification(String containerId, String zoneId, Instant scheduledTime) {
+        String message = String.format(
+            "📅 Collection scheduled: Container %s në zonë %s do të mbushet më %s",
+            containerId, zoneId, scheduledTime
+        );
+        logger.info(message);
+        // Në realitet, këtu do të dërgohej email/SMS për operatorët
     }
 }

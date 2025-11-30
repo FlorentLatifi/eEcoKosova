@@ -125,3 +125,4 @@ class KontenierTest {
         assertFalse(kontenier.needsUrgentCollection());
     }
 }
+
