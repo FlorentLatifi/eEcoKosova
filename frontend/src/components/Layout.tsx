@@ -15,6 +15,8 @@ import {
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
 
   const navigation = [
@@ -26,6 +28,26 @@ const Layout: React.FC = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSettings = () => {
+    alert("Cilësimet - Funksionaliteti do të shtohet së shpejti!");
+  };
+
+  const handleLogout = () => {
+    if (confirm("A jeni të sigurt që doni të dilni?")) {
+      alert("Duke u çkyçur... (Në një aplikacion real, kjo do të çkyçte përdoruesin)");
+    }
+  };
+
+  const handleNotifications = () => {
+    setNotificationsOpen(!notificationsOpen);
+    alert("Njoftime - Funksionaliteti do të shtohet së shpejti!");
+  };
+
+  const handleUserProfile = () => {
+    setUserMenuOpen(!userMenuOpen);
+    alert("Profil i Përdoruesit - Funksionaliteti do të shtohet së shpejti!");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -91,11 +113,17 @@ const Layout: React.FC = () => {
 
         {/* Bottom Actions */}
         <div className="absolute bottom-0 w-full p-3 border-t space-y-1">
-          <button className="flex items-center w-full px-3 py-3 text-gray-700 hover:bg-gray-100 rounded-lg">
+          <button
+            onClick={handleSettings}
+            className="flex items-center w-full px-3 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          >
             <Settings className="w-5 h-5" />
             {sidebarOpen && <span className="ml-3">Cilësimet</span>}
           </button>
-          <button className="flex items-center w-full px-3 py-3 text-red-600 hover:bg-red-50 rounded-lg">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             {sidebarOpen && <span className="ml-3">Dilni</span>}
           </button>
@@ -116,12 +144,20 @@ const Layout: React.FC = () => {
             </h2>
 
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+              <button
+                onClick={handleNotifications}
+                className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Njoftime"
+              >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
 
-              <div className="flex items-center space-x-3 pl-4 border-l">
+              <button
+                onClick={handleUserProfile}
+                className="flex items-center space-x-3 pl-4 border-l hover:opacity-80 transition-opacity cursor-pointer"
+                title="Profil i Përdoruesit"
+              >
                 <div className="w-10 h-10 bg-eco-blue rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold">A</span>
                 </div>
@@ -131,7 +167,7 @@ const Layout: React.FC = () => {
                   </p>
                   <p className="text-xs text-gray-500">admin@ecokosova.com</p>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </header>

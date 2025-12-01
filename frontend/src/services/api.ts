@@ -34,6 +34,26 @@ export interface ZoneStatistics {
   status: string;
 }
 
+export interface Route {
+  zoneId: string;
+  zoneName: string;
+  containerCount: number;
+  totalDistanceKm: number;
+  estimatedTimeMinutes: number;
+  totalCapacityLiters: number;
+  containers: Container[];
+  routeType: string;
+}
+
+export interface Report {
+  id: string;
+  title: string;
+  description: string;
+  generatedAt: string;
+  type: string;
+  data: any;
+}
+
 // API Functions
 export const getAllContainers = async (): Promise<Container[]> => {
   try {
@@ -74,6 +94,60 @@ export const getZoneStatistics = async (): Promise<ZoneStatistics[]> => {
     return response.data;
   } catch (error) {
     console.error('Error fetching zone statistics:', error);
+    throw error;
+  }
+};
+
+export const getRouteForZone = async (
+  zoneId: string,
+  startLat: number = 42.6629,
+  startLon: number = 21.1655,
+  strategy: string = 'OPTIMAL'
+): Promise<Route> => {
+  try {
+    const response = await api.get<Route>(`/routes/zone/${zoneId}`, {
+      params: { startLat, startLon, strategy }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching route:', error);
+    throw error;
+  }
+};
+
+export const getAllRoutes = async (
+  startLat: number = 42.6629,
+  startLon: number = 21.1655
+): Promise<Route[]> => {
+  try {
+    const response = await api.get<Route[]>('/routes/all', {
+      params: { startLat, startLon }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all routes:', error);
+    throw error;
+  }
+};
+
+export const getReports = async (): Promise<Report[]> => {
+  try {
+    const response = await api.get<Report[]>('/reports');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    throw error;
+  }
+};
+
+export const generateReport = async (reportType: string): Promise<Report> => {
+  try {
+    const response = await api.post<Report>(`/reports/generate`, {
+      type: reportType
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error generating report:', error);
     throw error;
   }
 };
