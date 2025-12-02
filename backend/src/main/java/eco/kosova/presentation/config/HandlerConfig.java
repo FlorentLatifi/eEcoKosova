@@ -46,6 +46,45 @@ public class HandlerConfig {
         return new CreateZoneHandler(zoneRepository);
     }
     
+    @Bean
+    public CreateContainerHandler createContainerHandler(
+            KontenierRepository kontenierRepository,
+            ZoneRepository zoneRepository
+    ) {
+        return new CreateContainerHandler(kontenierRepository, zoneRepository);
+    }
+    
+    @Bean
+    public UpdateContainerHandler updateContainerHandler(
+            KontenierRepository kontenierRepository,
+            ZoneRepository zoneRepository
+    ) {
+        return new UpdateContainerHandler(kontenierRepository, zoneRepository);
+    }
+    
+    @Bean
+    public DeleteContainerHandler deleteContainerHandler(
+            KontenierRepository kontenierRepository,
+            ZoneRepository zoneRepository
+    ) {
+        return new DeleteContainerHandler(kontenierRepository, zoneRepository);
+    }
+    
+    @Bean
+    public UpdateZoneHandler updateZoneHandler(
+            ZoneRepository zoneRepository
+    ) {
+        return new UpdateZoneHandler(zoneRepository);
+    }
+    
+    @Bean
+    public DeleteZoneHandler deleteZoneHandler(
+            ZoneRepository zoneRepository,
+            KontenierRepository kontenierRepository
+    ) {
+        return new DeleteZoneHandler(zoneRepository, kontenierRepository);
+    }
+    
     // ========== QUERY HANDLERS ==========
     
     @Bean
