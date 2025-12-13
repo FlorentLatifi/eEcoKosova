@@ -74,7 +74,9 @@ public class CreateContainerHandler {
         
         // Vendos operational status
         if (!command.isOperational()) {
-            kontenier.markAsNonOperational("Manually set as non-operational");
+            // Use existing domain method that marks container as under maintenance
+            // (which sets operational=false and status appropriately)
+            kontenier.markUnderMaintenance();
         }
         
         // Ruan kontejnerin
