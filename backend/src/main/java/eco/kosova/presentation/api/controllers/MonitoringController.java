@@ -1,10 +1,14 @@
 package eco.kosova.presentation.api.controllers;
 
 import eco.kosova.application.commands.UpdateContainerFillLevelCommand;
-import eco.kosova.application.handlers.UpdateContainerFillLevelHandler;
 import eco.kosova.application.handlers.GetAllContainersHandler;
+import eco.kosova.application.handlers.GetContainerByIdHandler;
+import eco.kosova.application.handlers.GetContainersByZoneHandler;
 import eco.kosova.application.handlers.GetCriticalContainersHandler;
+import eco.kosova.application.handlers.UpdateContainerFillLevelHandler;
 import eco.kosova.application.queries.GetAllContainersQuery;
+import eco.kosova.application.queries.GetContainerByIdQuery;
+import eco.kosova.application.queries.GetContainersByZoneQuery;
 import eco.kosova.application.queries.GetCriticalContainersQuery;
 import eco.kosova.domain.models.Kontenier;
 import eco.kosova.presentation.dtos.ContainerResponseDTO;
@@ -32,6 +36,12 @@ public class MonitoringController {
     
     @Autowired
     private GetCriticalContainersHandler getCriticalHandler;
+    
+    @Autowired
+    private GetContainerByIdHandler getByIdHandler;
+    
+    @Autowired
+    private GetContainersByZoneHandler getByZoneHandler;
     
     /**
      * GET /api/monitoring/containers - Merr të gjitha kontejnerët
@@ -88,6 +98,45 @@ public class MonitoringController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                 .body("Gabim i brendshëm: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * GET /api/monitoring/containers/{containerId} - Merr një kontejner specifik
+     */
+    @GetMapping("/containers/{containerId}")
+    public ResponseEntity<ContainerResponseDTO> getContainerById(
+            @PathVariable String containerId
+    ) {
+        try {
+            return getByIdHandler.handle(GetContainerByIdQuery.of(containerId))
+                .map(this::toDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * GET /api/monitoring/containers/zone/{zoneId} - Merr të gjitha kontejnerët e një zone
+     */
+    @GetMapping("/containers/zone/{zoneId}")
+    public ResponseEntity<List<ContainerResponseDTO>> getContainersByZone(
+            @PathVariable String zoneId
+    ) {
+        try {
+            List<Kontenier> containers = getByZoneHandler.handle(
+                GetContainersByZoneQuery.of(zoneId)
+            );
+            
+            List<ContainerResponseDTO> dtos = containers.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(dtos);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
     

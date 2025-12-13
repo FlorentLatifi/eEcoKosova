@@ -152,6 +152,167 @@ export const generateReport = async (reportType: string): Promise<Report> => {
   }
 };
 
+// Container Management Functions
+export const getContainerById = async (containerId: string): Promise<Container> => {
+  try {
+    const response = await api.get<Container>(`/containers/${containerId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching container:', error);
+    throw error;
+  }
+};
+
+export const getContainersByZone = async (zoneId: string): Promise<Container[]> => {
+  try {
+    const response = await api.get<Container[]>(`/containers/zone/${zoneId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching containers by zone:', error);
+    throw error;
+  }
+};
+
+export const createContainer = async (containerData: {
+  id: string;
+  zoneId: string;
+  type: string;
+  capacity?: number;
+  latitude?: number;
+  longitude?: number;
+  street: string;
+  city: string;
+  municipality: string;
+  postalCode?: string;
+  operational?: boolean;
+}): Promise<Container> => {
+  try {
+    const response = await api.post<Container>('/containers', containerData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating container:', error);
+    throw error;
+  }
+};
+
+export const updateContainer = async (
+  containerId: string,
+  containerData: {
+    zoneId?: string;
+    type?: string;
+    capacity?: number;
+    latitude?: number;
+    longitude?: number;
+    street?: string;
+    city?: string;
+    municipality?: string;
+    postalCode?: string;
+    operational?: boolean;
+    fillLevel?: number;
+  }
+): Promise<string> => {
+  try {
+    const response = await api.put<string>(`/containers/${containerId}`, containerData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating container:', error);
+    throw error;
+  }
+};
+
+export const deleteContainer = async (containerId: string): Promise<string> => {
+  try {
+    const response = await api.delete<string>(`/containers/${containerId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting container:', error);
+    throw error;
+  }
+};
+
+export const scheduleCollection = async (
+  containerId: string,
+  scheduledTime?: string
+): Promise<string> => {
+  try {
+    const response = await api.post<string>(
+      `/containers/${containerId}/schedule-collection`,
+      { scheduledTime: scheduledTime || new Date(Date.now() + 3600000).toISOString() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error scheduling collection:', error);
+    throw error;
+  }
+};
+
+export const emptyContainer = async (containerId: string): Promise<string> => {
+  try {
+    const response = await api.post<string>(`/containers/${containerId}/empty`);
+    return response.data;
+  } catch (error) {
+    console.error('Error emptying container:', error);
+    throw error;
+  }
+};
+
+// Zone Management Functions
+export const getAllZones = async (): Promise<any[]> => {
+  try {
+    const response = await api.get<any[]>('/zones');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching zones:', error);
+    throw error;
+  }
+};
+
+export const createZone = async (zoneData: {
+  zoneId: string;
+  name: string;
+  latitude?: number;
+  longitude?: number;
+  municipality: string;
+  description?: string;
+}): Promise<string> => {
+  try {
+    const response = await api.post<string>('/zones', zoneData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating zone:', error);
+    throw error;
+  }
+};
+
+export const updateZone = async (
+  zoneId: string,
+  zoneData: {
+    name?: string;
+    latitude?: number;
+    longitude?: number;
+    municipality?: string;
+    description?: string;
+  }
+): Promise<string> => {
+  try {
+    const response = await api.put<string>(`/zones/${zoneId}`, zoneData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating zone:', error);
+    throw error;
+  }
+};
+
+export const deleteZone = async (zoneId: string): Promise<string> => {
+  try {
+    const response = await api.delete<string>(`/zones/${zoneId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting zone:', error);
+    throw error;
+  }
+};
+
 // Helper Functions
 export const getStatusColor = (fillLevel: number): string => {
   if (fillLevel >= 90) return 'red';

@@ -31,7 +31,7 @@ public class CreateContainerHandler {
         this.zoneRepository = zoneRepository;
     }
     
-    public void handle(CreateContainerCommand command) {
+    public Kontenier handle(CreateContainerCommand command) {
         logger.info(String.format(
             "Creating new container: %s in zone %s",
             command.getId(), command.getZoneId()
@@ -90,6 +90,8 @@ public class CreateContainerHandler {
             "Container created successfully: %s",
             command.getId()
         ));
+        
+        return kontenier;
     }
     
     private ContainerType getContainerTypeFromString(String type) {

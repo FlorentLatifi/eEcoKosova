@@ -21,6 +21,13 @@ public final class GetContainersByZoneQuery {
         return zoneId;
     }
     
+    /**
+     * Factory method për krijimin e query-së.
+     */
+    public static GetContainersByZoneQuery of(String zoneId) {
+        return new GetContainersByZoneQuery(zoneId);
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

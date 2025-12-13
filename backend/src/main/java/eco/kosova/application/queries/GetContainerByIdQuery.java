@@ -28,6 +28,13 @@ public final class GetContainerByIdQuery {
         return containerId;
     }
     
+    /**
+     * Factory method për krijimin e query-së.
+     */
+    public static GetContainerByIdQuery of(String containerId) {
+        return new GetContainerByIdQuery(containerId);
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
