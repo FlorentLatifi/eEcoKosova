@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Trash2,
@@ -12,12 +12,19 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { useNotifications } from "../context/NotificationContext";
+import UserProfileModal from "./UserProfileModal";
+import NotificationsDropdown from "./NotificationsDropdown";
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [userProfileOpen, setUserProfileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -30,23 +37,21 @@ const Layout: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const handleSettings = () => {
-    alert("Cilësimet - Funksionaliteti do të shtohet së shpejti!");
+    navigate("/settings");
   };
 
   const handleLogout = () => {
     if (confirm("A jeni të sigurt që doni të dilni?")) {
-      alert("Duke u çkyçur... (Në një aplikacion real, kjo do të çkyçte përdoruesin)");
+      logout();
     }
   };
 
   const handleNotifications = () => {
     setNotificationsOpen(!notificationsOpen);
-    alert("Njoftime - Funksionaliteti do të shtohet së shpejti!");
   };
 
   const handleUserProfile = () => {
-    setUserMenuOpen(!userMenuOpen);
-    alert("Profil i Përdoruesit - Funksionaliteti do të shtohet së shpejti!");
+    setUserProfileOpen(true);
   };
 
   return (
@@ -144,14 +149,22 @@ const Layout: React.FC = () => {
             </h2>
 
             <div className="flex items-center space-x-4">
-              <button
-                onClick={handleNotifications}
-                className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Njoftime"
-              >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              <div className="relative">
+                <button
+                  onClick={handleNotifications}
+                  className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Njoftime"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </button>
+                <NotificationsDropdown
+                  isOpen={notificationsOpen}
+                  onClose={() => setNotificationsOpen(false)}
+                />
+              </div>
 
               <button
                 onClick={handleUserProfile}
@@ -159,13 +172,15 @@ const Layout: React.FC = () => {
                 title="Profil i Përdoruesit"
               >
                 <div className="w-10 h-10 bg-eco-blue rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold">A</span>
+                  <span className="text-white font-semibold">
+                    {user?.name.charAt(0).toUpperCase() || 'A'}
+                  </span>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">
-                    Admin User
+                    {user?.name || 'Admin User'}
                   </p>
-                  <p className="text-xs text-gray-500">admin@ecokosova.com</p>
+                  <p className="text-xs text-gray-500">{user?.email || 'admin@ecokosova.com'}</p>
                 </div>
               </button>
             </div>
@@ -177,6 +192,12 @@ const Layout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        isOpen={userProfileOpen}
+        onClose={() => setUserProfileOpen(false)}
+      />
     </div>
   );
 };

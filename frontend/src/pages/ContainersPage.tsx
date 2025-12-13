@@ -3,6 +3,7 @@ import { useContainers } from "../hooks/useContainers";
 import { Search, Filter, Download, MapPin, Activity } from "lucide-react";
 import type { Container } from "../services/api";
 import ContainerDetails from "../components/ContainerDetails";
+import { exportContainersToCSV } from "../utils/csvExport";
 
 const ContainersPage: React.FC = () => {
   const { containers, loading, statistics, refresh } = useContainers(30000);
@@ -92,7 +93,10 @@ const ContainersPage: React.FC = () => {
             </select>
           </div>
 
-          <button className="flex items-center space-x-2 px-4 py-2 bg-eco-green text-white rounded-lg hover:bg-green-600 transition-colors">
+          <button
+            onClick={() => exportContainersToCSV(filteredContainers)}
+            className="flex items-center space-x-2 px-4 py-2 bg-eco-green text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
             <Download className="w-5 h-5" />
             <span>Eksporto CSV</span>
           </button>

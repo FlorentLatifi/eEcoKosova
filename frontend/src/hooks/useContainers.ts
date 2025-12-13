@@ -19,10 +19,27 @@ interface UseContainersReturn {
   updateContainer: (containerId: string, newFillLevel: number) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const useContainers = (refreshInterval: number = 30000): UseContainersReturn => {
+export const useContainers = (refreshInterval?: number): UseContainersReturn => {
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Get refresh interval from settings or use default
+  const getRefreshInterval = () => {
+    if (refreshInterval !== undefined) return refreshInterval;
+    const settings = localStorage.getItem('ecokosova_settings');
+    if (settings) {
+      try {
+        const parsed = JSON.parse(settings);
+        if (parsed.autoRefresh && parsed.refreshInterval) {
+          return parsed.refreshInterval * 1000; // Convert seconds to milliseconds
+        }
+      } catch (e) {
+        console.error('Error reading settings:', e);
+      }
+    }
+    return 30000; // Default 30 seconds
+  };
 
   const fetchContainers = async () => {
     try {
@@ -57,14 +74,15 @@ export const useContainers = (refreshInterval: number = 30000): UseContainersRet
   }, []);
 
   useEffect(() => {
-    if (refreshInterval > 0) {
-      const interval = setInterval(() => {
+    const interval = getRefreshInterval();
+    if (interval > 0) {
+      const timer = setInterval(() => {
         fetchContainers();
-      }, refreshInterval);
-      return () => clearInterval(interval);
+      }, interval);
+      return () => clearInterval(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshInterval]);
+  }, []);
 
   const statistics: Statistics = {
     total: containers.length,
