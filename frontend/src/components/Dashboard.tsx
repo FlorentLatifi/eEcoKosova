@@ -6,6 +6,7 @@ import ContainerCard from "./ContainerCard";
 import AlertList from "./AlertList";
 import ContainerDetails from "./ContainerDetails";
 import type { Container } from "../services/api";
+import { isCritical, isWarning, isNormal } from "../utils/thresholdUtils";
 
 type FilterType = "all" | "critical" | "warning" | "normal";
 
@@ -25,10 +26,9 @@ const Dashboard: React.FC = () => {
   };
 
   const filteredContainers = containers.filter((container) => {
-    if (filter === "critical") return container.fillLevel >= 90;
-    if (filter === "warning")
-      return container.fillLevel >= 70 && container.fillLevel < 90;
-    if (filter === "normal") return container.fillLevel < 70;
+    if (filter === "critical") return isCritical(container.fillLevel);
+    if (filter === "warning") return isWarning(container.fillLevel);
+    if (filter === "normal") return isNormal(container.fillLevel);
     return true;
   });
 

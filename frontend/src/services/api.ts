@@ -117,11 +117,12 @@ export const getRouteForZone = async (
 
 export const getAllRoutes = async (
   startLat: number = 42.6629,
-  startLon: number = 21.1655
+  startLon: number = 21.1655,
+  strategy: string = 'OPTIMAL'
 ): Promise<Route[]> => {
   try {
     const response = await api.get<Route[]>('/routes/all', {
-      params: { startLat, startLon }
+      params: { startLat, startLon, strategy }
     });
     return response.data;
   } catch (error) {
@@ -313,24 +314,51 @@ export const deleteZone = async (zoneId: string): Promise<string> => {
   }
 };
 
-// Helper Functions
-export const getStatusColor = (fillLevel: number): string => {
-  if (fillLevel >= 90) return 'red';
-  if (fillLevel >= 70) return 'amber';
-  return 'green';
-};
+// Helper Functions - DEPRECATED: Përdor thresholdUtils në vend
+// Këto funksione janë mbajtur për backward compatibility
+// Por rekomandohet përdorimi i thresholdUtils.ts
 
+// Re-export nga thresholdUtils
+export { 
+  getStatusColor, 
+  getStatusText 
+} from '../utils/thresholdUtils';
+
+// Legacy function për backward compatibility (badge class names)
 export const getStatusBadge = (fillLevel: number): string => {
-  if (fillLevel >= 90) return 'badge-danger';
-  if (fillLevel >= 70) return 'badge-warning';
-  return 'badge-success';
-};
+  // Lexo threshold nga localStorage
+  const getCriticalThreshold = (): number => {
+    const settings = localStorage.getItem('ecokosova_settings');
+    if (settings) {
+      try {
+        const parsed = JSON.parse(settings);
+        if (parsed.criticalThreshold) return parsed.criticalThreshold;
+      } catch (e) {
+        console.error('Error reading critical threshold:', e);
+      }
+    }
+    return 90; // Default
+  };
 
-export const getStatusText = (fillLevel: number): string => {
-  if (fillLevel >= 90) return 'KRITIK';
-  if (fillLevel >= 70) return 'PARALAJMËRIM';
-  if (fillLevel <= 10) return 'BOS';
-  return 'NORMAL';
+  const getWarningThreshold = (): number => {
+    const settings = localStorage.getItem('ecokosova_settings');
+    if (settings) {
+      try {
+        const parsed = JSON.parse(settings);
+        if (parsed.warningThreshold) return parsed.warningThreshold;
+      } catch (e) {
+        console.error('Error reading warning threshold:', e);
+      }
+    }
+    return 70; // Default
+  };
+
+  const criticalThreshold = getCriticalThreshold();
+  const warningThreshold = getWarningThreshold();
+
+  if (fillLevel >= criticalThreshold) return 'badge-danger';
+  if (fillLevel >= warningThreshold) return 'badge-warning';
+  return 'badge-success';
 };
 
 export default api;

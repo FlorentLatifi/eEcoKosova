@@ -4,6 +4,7 @@ import { Search, Filter, Download, MapPin, Activity } from "lucide-react";
 import type { Container } from "../services/api";
 import ContainerDetails from "../components/ContainerDetails";
 import { exportContainersToCSV } from "../utils/csvExport";
+import { isCritical, isWarning, isNormal, getStatusBadge } from "../utils/thresholdUtils";
 
 const ContainersPage: React.FC = () => {
   const { containers, loading, statistics, refresh } = useContainers(30000);
@@ -20,21 +21,13 @@ const ContainersPage: React.FC = () => {
 
     if (statusFilter === "all") return matchesSearch;
     if (statusFilter === "critical")
-      return matchesSearch && container.fillLevel >= 90;
+      return matchesSearch && isCritical(container.fillLevel);
     if (statusFilter === "warning")
-      return (
-        matchesSearch && container.fillLevel >= 70 && container.fillLevel < 90
-      );
+      return matchesSearch && isWarning(container.fillLevel);
     if (statusFilter === "normal")
-      return matchesSearch && container.fillLevel < 70;
+      return matchesSearch && isNormal(container.fillLevel);
     return matchesSearch;
   });
-
-  const getStatusBadge = (fillLevel: number) => {
-    if (fillLevel >= 90) return "bg-red-100 text-red-800";
-    if (fillLevel >= 70) return "bg-amber-100 text-amber-800";
-    return "bg-green-100 text-green-800";
-  };
 
   return (
     <div className="space-y-6">
@@ -165,9 +158,9 @@ const ContainersPage: React.FC = () => {
                         <div className="w-32 bg-gray-200 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full ${
-                              container.fillLevel >= 90
+                              isCritical(container.fillLevel)
                                 ? "bg-red-500"
-                                : container.fillLevel >= 70
+                                : isWarning(container.fillLevel)
                                 ? "bg-amber-500"
                                 : "bg-green-500"
                             }`}

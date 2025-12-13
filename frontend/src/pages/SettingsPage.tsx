@@ -19,7 +19,8 @@ const SettingsPage: React.FC = () => {
     const saved = localStorage.getItem('ecokosova_settings');
     if (saved) {
       try {
-        setSettings({ ...settings, ...JSON.parse(saved) });
+        const parsed = JSON.parse(saved);
+        setSettings(prev => ({ ...prev, ...parsed }));
       } catch (e) {
         console.error('Error loading settings:', e);
       }
@@ -30,6 +31,8 @@ const SettingsPage: React.FC = () => {
     localStorage.setItem('ecokosova_settings', JSON.stringify(settings));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    // Trigger refresh për të përditësuar threshold-et në të gjitha komponentet
+    window.dispatchEvent(new Event('settingsUpdated'));
   };
 
   return (

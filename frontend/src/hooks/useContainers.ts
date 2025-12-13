@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAllContainers, updateFillLevel } from '../services/api';
 import type { Container } from '../services/api';
+import { isCritical, isWarning, isNormal } from '../utils/thresholdUtils';
 
 interface Statistics {
   total: number;
@@ -84,11 +85,20 @@ export const useContainers = (refreshInterval?: number): UseContainersReturn => 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Listen for settings updates
+  useEffect(() => {
+    const handleSettingsUpdate = () => {
+      fetchContainers();
+    };
+    window.addEventListener('settingsUpdated', handleSettingsUpdate);
+    return () => window.removeEventListener('settingsUpdated', handleSettingsUpdate);
+  }, []);
+
   const statistics: Statistics = {
     total: containers.length,
-    critical: containers.filter(c => c.fillLevel >= 90).length,
-    warning: containers.filter(c => c.fillLevel >= 70 && c.fillLevel < 90).length,
-    normal: containers.filter(c => c.fillLevel < 70).length,
+    critical: containers.filter(c => isCritical(c.fillLevel)).length,
+    warning: containers.filter(c => isWarning(c.fillLevel)).length,
+    normal: containers.filter(c => isNormal(c.fillLevel)).length,
     offline: containers.filter(c => !c.operational).length,
   };
 

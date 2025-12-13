@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getCriticalContainers, type Container } from '../services/api';
+import { getAllContainers, type Container } from '../services/api';
+import { isCritical } from '../utils/thresholdUtils';
 
 export interface Notification {
   id: string;
@@ -52,7 +53,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     const checkCriticalContainers = async () => {
       try {
-        const critical = await getCriticalContainers();
+        const allContainers = await getAllContainers();
+        const critical = allContainers.filter(c => isCritical(c.fillLevel));
+        
         if (critical.length > 0) {
           critical.forEach((container) => {
             const exists = notifications.some(
@@ -79,7 +82,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Check every 30 seconds
     const interval = setInterval(checkCriticalContainers, 30000);
     return () => clearInterval(interval);
-  }, [notifications]);
+  }, [notifications, addNotification]);
 
   const addNotification = useCallback(
     (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {

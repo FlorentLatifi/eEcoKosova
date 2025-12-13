@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPin, Activity, AlertCircle } from 'lucide-react';
 import type { Container } from '../services/api';
-import { getStatusBadge, getStatusText } from '../services/api';
+import { getStatusBadge, getStatusText, getStatusColor } from '../utils/thresholdUtils';
 
 interface ContainerCardProps {
   container: Container;
@@ -18,9 +18,9 @@ const ContainerCard: React.FC<ContainerCardProps> = ({ container, onClick }) => 
       className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4"
       style={{
         borderLeftColor:
-          container.fillLevel >= 90
+          getStatusColor(container.fillLevel) === 'red'
             ? '#EF4444'
-            : container.fillLevel >= 70
+            : getStatusColor(container.fillLevel) === 'amber'
             ? '#F59E0B'
             : '#10B981',
       }}
@@ -52,9 +52,9 @@ const ContainerCard: React.FC<ContainerCardProps> = ({ container, onClick }) => 
         <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
           <div
             className={`h-full transition-all ${
-              container.fillLevel >= 90
+              getStatusColor(container.fillLevel) === 'red'
                 ? 'bg-red-500'
-                : container.fillLevel >= 70
+                : getStatusColor(container.fillLevel) === 'amber'
                 ? 'bg-amber-500'
                 : 'bg-green-500'
             }`}

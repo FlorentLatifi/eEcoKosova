@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, MapPin, Activity, Calendar, Trash2 } from 'lucide-react';
 import type { Container } from '../services/api';
 import { updateFillLevel } from '../services/api';
+import { getStatusColor } from '../utils/thresholdUtils';
 
 interface ContainerDetailsProps {
   container: Container;
@@ -63,9 +64,9 @@ const ContainerDetails: React.FC<ContainerDetailsProps> = ({ container, onClose,
             <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
               <div
                 className={`h-full transition-all ${
-                  container.fillLevel >= 90
+                  getStatusColor(container.fillLevel) === 'red'
                     ? 'bg-red-500'
-                    : container.fillLevel >= 70
+                    : getStatusColor(container.fillLevel) === 'amber'
                     ? 'bg-amber-500'
                     : 'bg-green-500'
                 }`}

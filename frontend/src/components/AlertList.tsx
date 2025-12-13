@@ -1,13 +1,14 @@
 import React from 'react';
 import { AlertTriangle, MapPin, Navigation } from 'lucide-react';
 import type { Container } from '../services/api';
+import { isCritical } from '../utils/thresholdUtils';
 
 interface AlertListProps {
   containers: Container[];
 }
 
 const AlertList: React.FC<AlertListProps> = ({ containers }) => {
-  const criticalContainers = containers.filter(c => c.fillLevel >= 90);
+  const criticalContainers = containers.filter(c => isCritical(c.fillLevel));
 
   if (criticalContainers.length === 0) return null;
 

@@ -11,6 +11,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { getAllRoutes, getRouteForZone, getZoneStatistics, type Route as RouteType, type ZoneStatistics } from "../services/api";
+import RouteDetailsModal from "../components/RouteDetailsModal";
+import { isCritical, isWarning, getStatusBadge } from "../utils/thresholdUtils";
 
 const RoutesPage: React.FC = () => {
   const [routes, setRoutes] = useState<RouteType[]>([]);
@@ -22,13 +24,13 @@ const RoutesPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [strategy]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const [routesData, zonesData] = await Promise.all([
-        getAllRoutes(),
+        getAllRoutes(42.6629, 21.1655, strategy),
         getZoneStatistics(),
       ]);
       setRoutes(routesData);
@@ -43,6 +45,7 @@ const RoutesPage: React.FC = () => {
   const handleZoneChange = async (zoneId: string) => {
     if (!zoneId) {
       setSelectedRoute(null);
+      setSelectedZoneId("");
       return;
     }
 
@@ -50,8 +53,10 @@ const RoutesPage: React.FC = () => {
       setLoading(true);
       const route = await getRouteForZone(zoneId, 42.6629, 21.1655, strategy);
       setSelectedRoute(route);
+      setSelectedZoneId(zoneId);
     } catch (error) {
       console.error("Error fetching route for zone:", error);
+      setSelectedRoute(null);
     } finally {
       setLoading(false);
     }
@@ -206,7 +211,7 @@ const RoutesPage: React.FC = () => {
       </div>
 
       {/* Routes List */}
-      {(selectedRoute ? [selectedRoute] : routes).length === 0 ? (
+      {routes.length === 0 && !selectedRoute ? (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-700 mb-2">
@@ -218,7 +223,7 @@ const RoutesPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {(selectedRoute ? [selectedRoute] : routes).map((route) => (
+          {routes.map((route) => (
             <div
               key={route.zoneId}
               className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all"
@@ -312,13 +317,7 @@ const RoutesPage: React.FC = () => {
                             </span>
                           </div>
                           <span
-                            className={`text-xs px-2 py-1 rounded ${
-                              container.fillLevel >= 90
-                                ? "bg-red-100 text-red-800"
-                                : container.fillLevel >= 70
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
+                            className={`text-xs px-2 py-1 rounded ${getStatusBadge(container.fillLevel)}`}
                           >
                             {container.status}
                           </span>
@@ -330,7 +329,10 @@ const RoutesPage: React.FC = () => {
 
                 {/* Action Button */}
                 <button
-                  onClick={() => setSelectedRoute(route)}
+                  onClick={() => {
+                    setSelectedRoute(route);
+                    setSelectedZoneId(route.zoneId);
+                  }}
                   className="mt-4 w-full bg-eco-blue text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   Shiko Detaje
@@ -339,6 +341,18 @@ const RoutesPage: React.FC = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Route Details Modal */}
+      {selectedRoute && (
+        <RouteDetailsModal
+          route={selectedRoute}
+          isOpen={true}
+          onClose={() => {
+            setSelectedRoute(null);
+            setSelectedZoneId("");
+          }}
+        />
       )}
     </div>
   );

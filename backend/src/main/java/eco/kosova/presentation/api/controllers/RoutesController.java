@@ -93,7 +93,8 @@ public class RoutesController {
     @GetMapping("/all")
     public ResponseEntity<List<RouteResponseDTO>> getAllRoutes(
             @RequestParam(required = false, defaultValue = "42.6629") double startLat,
-            @RequestParam(required = false, defaultValue = "21.1655") double startLon
+            @RequestParam(required = false, defaultValue = "21.1655") double startLon,
+            @RequestParam(required = false, defaultValue = "OPTIMAL") String strategy
     ) {
         try {
             List<Zone> zones = zoneRepository.findAll();
@@ -102,8 +103,16 @@ public class RoutesController {
             List<RouteResponseDTO> routes = zones.stream()
                 .map(zone -> {
                     try {
-                        List<Kontenier> route = routeOptimizationService
-                            .calculateOptimalRoute(zone.getId(), startPoint);
+                        List<Kontenier> route;
+                        String routeType;
+                        
+                        if ("PRIORITY".equalsIgnoreCase(strategy)) {
+                            route = routeOptimizationService.calculatePriorityBasedRoute(zone.getId());
+                            routeType = "PRIORITY_BASED";
+                        } else {
+                            route = routeOptimizationService.calculateOptimalRoute(zone.getId(), startPoint);
+                            routeType = "OPTIMAL";
+                        }
                         
                         if (route.isEmpty()) {
                             return null;
@@ -119,7 +128,7 @@ public class RoutesController {
                         dto.setTotalDistanceKm(routeInfo.getTotalDistanceKm());
                         dto.setEstimatedTimeMinutes(routeInfo.getEstimatedTimeMinutes());
                         dto.setTotalCapacityLiters(routeInfo.getTotalCapacityLiters());
-                        dto.setRouteType("OPTIMAL");
+                        dto.setRouteType(routeType);
                         dto.setContainers(route.stream()
                             .map(this::containerToDTO)
                             .collect(Collectors.toList()));
