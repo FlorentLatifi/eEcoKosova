@@ -1,8 +1,22 @@
-import React, { useState } from 'react';
-import { X, MapPin, Activity, Calendar, Trash2 } from 'lucide-react';
-import type { Container } from '../services/api';
-import { updateFillLevel } from '../services/api';
-import { getStatusColor } from '../utils/thresholdUtils';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { X, MapPin, Activity, Calendar, Trash2 } from "lucide-react";
+import type { Container } from "../services/api";
+import { updateFillLevel, ApiError } from "../services/api";
+import { getStatusColor } from "../utils/thresholdUtils";
+import { useToast } from "../context/ToastContext";
+
+// Zod schema për validation
+const fillLevelSchema = z.object({
+  fillLevel: z
+    .number()
+    .min(0, "Niveli i mbushjes duhet të jetë së paku 0%")
+    .max(100, "Niveli i mbushjes duhet të jetë më së shumti 100%"),
+});
+
+type FillLevelFormData = z.infer<typeof fillLevelSchema>;
 
 interface ContainerDetailsProps {
   container: Container;
@@ -10,27 +24,38 @@ interface ContainerDetailsProps {
   onUpdate: () => void;
 }
 
-const ContainerDetails: React.FC<ContainerDetailsProps> = ({ container, onClose, onUpdate }) => {
-  const [newFillLevel, setNewFillLevel] = useState(container.fillLevel);
-  const [updating, setUpdating] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+const ContainerDetails: React.FC<ContainerDetailsProps> = ({
+  container,
+  onClose,
+  onUpdate,
+}) => {
+  const { showSuccess, showError } = useToast();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<FillLevelFormData>({
+    resolver: zodResolver(fillLevelSchema),
+    defaultValues: {
+      fillLevel: container.fillLevel,
+    },
+  });
 
-  const handleUpdate = async () => {
-    setUpdating(true);
-    setMessage(null);
+  const watchedFillLevel = watch("fillLevel");
 
+  const onSubmit = async (data: FillLevelFormData) => {
     try {
-      await updateFillLevel(container.id, newFillLevel);
-      setMessage({ type: 'success', text: 'Niveli u përditësua me sukses!' });
-
+      await updateFillLevel(container.id, data.fillLevel);
+      showSuccess("Niveli u përditësua me sukses!");
       setTimeout(() => {
         onUpdate();
         onClose();
       }, 1500);
     } catch (error) {
-      setMessage({ type: 'error', text: 'Gabim gjatë përditësimit!' });
-    } finally {
-      setUpdating(false);
+      const errorMessage =
+        error instanceof ApiError ? error.message : "Gabim gjatë përditësimit!";
+      showError(errorMessage);
     }
   };
 
@@ -58,17 +83,21 @@ const ContainerDetails: React.FC<ContainerDetailsProps> = ({ container, onClose,
           {/* Fill Level Display */}
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Niveli Aktual</span>
-              <span className="text-4xl font-bold text-eco-blue">{container.fillLevel}%</span>
+              <span className="text-sm font-medium text-gray-700">
+                Niveli Aktual
+              </span>
+              <span className="text-4xl font-bold text-eco-blue">
+                {container.fillLevel}%
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
               <div
                 className={`h-full transition-all ${
-                  getStatusColor(container.fillLevel) === 'red'
-                    ? 'bg-red-500'
-                    : getStatusColor(container.fillLevel) === 'amber'
-                    ? 'bg-amber-500'
-                    : 'bg-green-500'
+                  getStatusColor(container.fillLevel) === "red"
+                    ? "bg-red-500"
+                    : getStatusColor(container.fillLevel) === "amber"
+                    ? "bg-amber-500"
+                    : "bg-green-500"
                 }`}
                 style={{ width: `${container.fillLevel}%` }}
               />
@@ -93,7 +122,9 @@ const ContainerDetails: React.FC<ContainerDetailsProps> = ({ container, onClose,
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">Kapaciteti</p>
-                <p className="text-sm text-gray-900">{container.capacity} Litra</p>
+                <p className="text-sm text-gray-900">
+                  {container.capacity} Litra
+                </p>
               </div>
             </div>
 
@@ -113,26 +144,29 @@ const ContainerDetails: React.FC<ContainerDetailsProps> = ({ container, onClose,
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">Operativ</p>
-                <p className="text-sm text-gray-900">{container.operational ? 'Po ✓' : 'Jo ✗'}</p>
+                <p className="text-sm text-gray-900">
+                  {container.operational ? "Po ✓" : "Jo ✗"}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Update Fill Level */}
           <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Përditëso Nivelin e Mbushjes</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Përditëso Nivelin e Mbushjes
+            </h3>
 
-            <div className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nivel i Ri: {newFillLevel}%
+                  Nivel i Ri: {watchedFillLevel}%
                 </label>
                 <input
                   type="range"
                   min="0"
                   max="100"
-                  value={newFillLevel}
-                  onChange={(e) => setNewFillLevel(parseInt(e.target.value))}
+                  {...register("fillLevel", { valueAsNumber: true })}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 />
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -140,30 +174,27 @@ const ContainerDetails: React.FC<ContainerDetailsProps> = ({ container, onClose,
                   <span>50%</span>
                   <span>100%</span>
                 </div>
+                {errors.fillLevel && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.fillLevel.message}
+                  </p>
+                )}
               </div>
 
-              {message && (
-                <div
-                  className={`p-3 rounded-lg ${
-                    message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-                  }`}
-                >
-                  {message.text}
-                </div>
-              )}
-
               <button
-                onClick={handleUpdate}
-                disabled={updating || newFillLevel === container.fillLevel}
+                type="submit"
+                disabled={
+                  isSubmitting || watchedFillLevel === container.fillLevel
+                }
                 className={`w-full py-3 rounded-lg font-medium transition-all ${
-                  updating || newFillLevel === container.fillLevel
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-eco-blue text-white hover:bg-blue-600'
+                  isSubmitting || watchedFillLevel === container.fillLevel
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-eco-blue text-white hover:bg-blue-600"
                 }`}
               >
-                {updating ? 'Duke përditësuar...' : 'Përditëso Nivelin'}
+                {isSubmitting ? "Duke përditësuar..." : "Përditëso Nivelin"}
               </button>
-            </div>
+            </form>
           </div>
         </div>
       </div>
@@ -172,4 +203,3 @@ const ContainerDetails: React.FC<ContainerDetailsProps> = ({ container, onClose,
 };
 
 export default ContainerDetails;
-

@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { RefreshCw, AlertTriangle, Activity } from "lucide-react";
+import { RefreshCw, AlertTriangle, Activity, Map, List } from "lucide-react";
 import { useContainers } from "../hooks/useContainers";
 import StatisticsPanel from "./StatisticsPanel";
 import ContainerCard from "./ContainerCard";
 import AlertList from "./AlertList";
 import ContainerDetails from "./ContainerDetails";
+import { ContainerMap } from "./ContainerMap";
 import type { Container } from "../services/api";
 import { isCritical, isWarning, isNormal } from "../utils/thresholdUtils";
 
 type FilterType = "all" | "critical" | "warning" | "normal";
+type ViewType = "list" | "map";
 
 const Dashboard: React.FC = () => {
   const { containers, loading, error, statistics, refresh } =
@@ -17,6 +19,7 @@ const Dashboard: React.FC = () => {
     null
   );
   const [filter, setFilter] = useState<FilterType>("all");
+  const [view, setView] = useState<ViewType>("list");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -75,8 +78,8 @@ const Dashboard: React.FC = () => {
       {/* Alert List */}
       <AlertList containers={containers} />
 
-      {/* Filter Tabs + Refresh Button */}
-      <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-between">
+      {/* Filter Tabs + View Toggle + Refresh Button */}
+      <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-between flex-wrap gap-4">
         <div className="flex space-x-2">
           <button
             onClick={() => setFilter("all")}
@@ -120,20 +123,58 @@ const Dashboard: React.FC = () => {
           </button>
         </div>
 
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="flex items-center space-x-2 bg-eco-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw
-            className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`}
-          />
-          <span>Rifresko</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          {/* View Toggle */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setView("list")}
+              className={`px-3 py-2 rounded-md transition-all flex items-center space-x-2 ${
+                view === "list"
+                  ? "bg-white text-eco-blue shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <List className="w-4 h-4" />
+              <span>Listë</span>
+            </button>
+            <button
+              onClick={() => setView("map")}
+              className={`px-3 py-2 rounded-md transition-all flex items-center space-x-2 ${
+                view === "map"
+                  ? "bg-white text-eco-blue shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Map className="w-4 h-4" />
+              <span>Hartë</span>
+            </button>
+          </div>
+
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center space-x-2 bg-eco-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+            <span>Rifresko</span>
+          </button>
+        </div>
       </div>
 
-      {/* Containers Grid */}
-      {filteredContainers.length === 0 ? (
+      {/* Containers View - List or Map */}
+      {view === "map" ? (
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="h-[600px] w-full">
+            <ContainerMap
+              containers={filteredContainers}
+              selectedContainer={selectedContainer}
+              onContainerClick={setSelectedContainer}
+            />
+          </div>
+        </div>
+      ) : filteredContainers.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <Activity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-700 mb-2">

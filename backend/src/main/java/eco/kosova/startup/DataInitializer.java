@@ -43,13 +43,13 @@ public class DataInitializer implements CommandLineRunner {
     }
     
     private void printDataSummary(long containers, long zones) {
-        System.out.println();
-        System.out.println("╔════════════════════════════════════════╗");
-        System.out.println("║         DATA INITIALIZATION            ║");
-        System.out.println("╠════════════════════════════════════════╣");
-        System.out.printf("║  Containers Loaded: %-18d ║%n", containers);
-        System.out.printf("║  Zones Loaded: %-23d ║%n", zones);
-        System.out.println("╚════════════════════════════════════════╝");
-        System.out.println();
+        logger.info("");
+        logger.info("╔════════════════════════════════════════╗");
+        logger.info("║         DATA INITIALIZATION            ║");
+        logger.info("╠════════════════════════════════════════╣");
+        logger.info(String.format("║  Containers Loaded: %-18d ║", containers));
+        logger.info(String.format("║  Zones Loaded: %-23d ║", zones));
+        logger.info("╚════════════════════════════════════════╝");
+        logger.info("");
     }
 }

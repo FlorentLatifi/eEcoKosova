@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.logging.Logger;
+
 /**
  * Main Application Entry Point për EcoKosova Waste Management System.
  * 
@@ -18,21 +20,24 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class EcoKosovaApplication {
     
+    private static final Logger logger = Logger.getLogger(EcoKosovaApplication.class.getName());
+    
     public static void main(String[] args) {
         printBanner();
         
-        System.out.println("🚀 Starting EcoKosova Waste Management System...");
-        System.out.println("📍 Location: Kosovo");
-        System.out.println("🏗️ Architecture: DDD + Layered + CQRS");
-        System.out.println();
+        logger.info("🚀 Starting EcoKosova Waste Management System...");
+        logger.info("📍 Location: Kosovo");
+        logger.info("🏗️ Architecture: DDD + Layered + CQRS");
+        logger.info("");
         
         SpringApplication.run(EcoKosovaApplication.class, args);
         
-        System.out.println();
-        System.out.println("✅ EcoKosova System is running!");
-        System.out.println("🌐 API available at: http://localhost:8080/api");
-        System.out.println("📊 Monitoring endpoint: http://localhost:8080/api/monitoring/containers");
-        System.out.println("🗺️ Zones endpoint: http://localhost:8080/api/zones/statistics");
+        logger.info("");
+        logger.info("✅ EcoKosova System is running!");
+        logger.info("🌐 API available at: http://localhost:8080/api");
+        logger.info("📊 Monitoring endpoint: http://localhost:8080/api/monitoring/containers");
+        logger.info("🗺️ Zones endpoint: http://localhost:8080/api/zones/statistics");
+        logger.info("💚 Health check: http://localhost:8080/actuator/health");
     }
     
     private static void printBanner() {
@@ -49,6 +54,6 @@ public class EcoKosovaApplication {
                                     Version 1.0.0
                 """;
         
-        System.out.println(banner);
+        logger.info(banner);
     }
 }

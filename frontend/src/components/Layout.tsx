@@ -11,11 +11,16 @@ import {
   Bell,
   Settings,
   LogOut,
+  Calendar,
+  Truck,
+  Users,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNotifications } from "../context/NotificationContext";
+import { useToast } from "../context/ToastContext";
 import UserProfileModal from "./UserProfileModal";
 import NotificationsDropdown from "./NotificationsDropdown";
+import { ToastContainer } from "./ToastContainer";
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -25,12 +30,16 @@ const Layout: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
+  const { toasts, removeToast } = useToast();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Kontejnerët", href: "/containers", icon: Trash2 },
     { name: "Zonat", href: "/zones", icon: Map },
     { name: "Rrugët", href: "/routes", icon: Route },
+    { name: "Kamionët", href: "/kamionet", icon: Truck },
+    { name: "Qytetarët", href: "/qytetaret", icon: Users },
+    { name: "Ciklet", href: "/ciklet", icon: Calendar },
     { name: "Raporte", href: "/reports", icon: FileText },
   ];
 
@@ -198,6 +207,9 @@ const Layout: React.FC = () => {
         isOpen={userProfileOpen}
         onClose={() => setUserProfileOpen(false)}
       />
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 };

@@ -49,17 +49,18 @@ public class RoutesController {
             Zone zone = zoneOpt.get();
             Coordinates startPoint = new Coordinates(startLat, startLon);
             
-            // Llogarit rrugën bazuar në strategji
-            List<Kontenier> route;
-            String routeType;
+            // Llogarit rrugën bazuar në strategji (përdor Strategy Pattern)
+            String strategyName = "OPTIMAL".equalsIgnoreCase(strategy) 
+                ? "NEAREST_NEIGHBOR" 
+                : strategy.toUpperCase();
             
-            if ("PRIORITY".equalsIgnoreCase(strategy)) {
-                route = routeOptimizationService.calculatePriorityBasedRoute(zoneId);
-                routeType = "PRIORITY_BASED";
-            } else {
-                route = routeOptimizationService.calculateOptimalRoute(zoneId, startPoint);
-                routeType = "OPTIMAL";
-            }
+            List<Kontenier> route = routeOptimizationService.calculateOptimalRoute(
+                zoneId, 
+                startPoint, 
+                strategyName
+            );
+            
+            String routeType = strategyName;
             
             // Krijon RouteInfo për statistika
             RouteOptimizationService.RouteInfo routeInfo = 
@@ -103,16 +104,18 @@ public class RoutesController {
             List<RouteResponseDTO> routes = zones.stream()
                 .map(zone -> {
                     try {
-                        List<Kontenier> route;
-                        String routeType;
+                        // Përdor Strategy Pattern
+                        String strategyName = "OPTIMAL".equalsIgnoreCase(strategy) 
+                            ? "NEAREST_NEIGHBOR" 
+                            : strategy.toUpperCase();
                         
-                        if ("PRIORITY".equalsIgnoreCase(strategy)) {
-                            route = routeOptimizationService.calculatePriorityBasedRoute(zone.getId());
-                            routeType = "PRIORITY_BASED";
-                        } else {
-                            route = routeOptimizationService.calculateOptimalRoute(zone.getId(), startPoint);
-                            routeType = "OPTIMAL";
-                        }
+                        List<Kontenier> route = routeOptimizationService.calculateOptimalRoute(
+                            zone.getId(), 
+                            startPoint, 
+                            strategyName
+                        );
+                        
+                        String routeType = strategyName;
                         
                         if (route.isEmpty()) {
                             return null;

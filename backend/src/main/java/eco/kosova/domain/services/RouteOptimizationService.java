@@ -11,34 +11,37 @@ import java.util.stream.Collectors;
 /**
  * Domain Service për optimizimin e rrugëve të mbledhjes së mbeturinave.
  * 
- * Ky service përdor algoritme të ndryshme për të gjetur rrugën
- * më të mirë për mbledhjen e kontejnerëve.
- * 
- * Strategjitë e disponueshme:
+ * Ky service përdor Strategy Pattern për të lejuar zgjedhjen e algoritmit
+ * në runtime. Strategjitë e disponueshme:
  * - NEAREST_NEIGHBOR: Fqinji më i afërt (greedy algorithm)
  * - PRIORITY_BASED: Bazuar në prioritetin e mbushjes
- * - ZONE_BASED: Mbledhje sipas zonave
  */
 public class RouteOptimizationService {
     
     private static final Logger logger = Logger.getLogger(RouteOptimizationService.class.getName());
     
     private final KontenierRepository kontenierRepository;
+    private final Map<String, RouteStrategy> strategies;
     
     public RouteOptimizationService(KontenierRepository kontenierRepository) {
         this.kontenierRepository = kontenierRepository;
+        this.strategies = new HashMap<>();
+        // Inicializo strategjitë e disponueshme
+        this.strategies.put("NEAREST_NEIGHBOR", new NearestNeighborStrategy());
+        this.strategies.put("PRIORITY_BASED", new PriorityBasedStrategy());
     }
     
     /**
      * Llogarit rrugën optimale për mbledhjen e kontejnerëve në një zonë.
-     * Përdor algoritmin Nearest Neighbor.
+     * Përdor strategjinë e specifikuar ose NEAREST_NEIGHBOR si default.
      * 
      * @param zoneId ID-ja e zonës
      * @param startPoint Pika e fillimit (p.sh., vendndodhja e kamionit)
+     * @param strategyName Emri i strategjisë (NEAREST_NEIGHBOR, PRIORITY_BASED)
      * @return Lista e kontejnerëve të renditur sipas rrugës optimale
      */
-    public List<Kontenier> calculateOptimalRoute(String zoneId, Coordinates startPoint) {
-        logger.info(String.format("Calculating optimal route for zone %s", zoneId));
+    public List<Kontenier> calculateOptimalRoute(String zoneId, Coordinates startPoint, String strategyName) {
+        logger.info(String.format("Calculating route for zone %s using strategy: %s", zoneId, strategyName));
         
         // Merr kontejnerët që duhen mbledhur në zonë
         List<Kontenier> containersToCollect = kontenierRepository
@@ -51,8 +54,26 @@ public class RouteOptimizationService {
             return Collections.emptyList();
         }
         
-        // Apliko algoritmin Nearest Neighbor
-        return nearestNeighborRoute(containersToCollect, startPoint);
+        // Zgjedh strategjinë
+        RouteStrategy strategy = strategies.getOrDefault(
+            strategyName != null ? strategyName.toUpperCase() : "NEAREST_NEIGHBOR",
+            strategies.get("NEAREST_NEIGHBOR")
+        );
+        
+        // Apliko strategjinë
+        return strategy.calculateRoute(containersToCollect, startPoint);
+    }
+    
+    /**
+     * Llogarit rrugën optimale për mbledhjen e kontejnerëve në një zonë.
+     * Përdor NEAREST_NEIGHBOR si strategji default (backward compatibility).
+     * 
+     * @param zoneId ID-ja e zonës
+     * @param startPoint Pika e fillimit
+     * @return Lista e kontejnerëve të renditur sipas rrugës optimale
+     */
+    public List<Kontenier> calculateOptimalRoute(String zoneId, Coordinates startPoint) {
+        return calculateOptimalRoute(zoneId, startPoint, "NEAREST_NEIGHBOR");
     }
     
     /**
@@ -67,56 +88,37 @@ public class RouteOptimizationService {
         List<Kontenier> containers = kontenierRepository
             .findByZoneId(zoneId).stream()
             .filter(Kontenier::isReadyForCollection)
-            .sorted(Comparator.comparingInt(c -> -c.getFillLevel().getValue())) // Descending
             .collect(Collectors.toList());
         
-        logger.info(String.format("Route contains %d containers", containers.size()));
+        if (containers.isEmpty()) {
+            logger.info("No containers need collection in zone " + zoneId);
+            return Collections.emptyList();
+        }
         
-        return containers;
+        // Përdor PriorityBasedStrategy
+        RouteStrategy strategy = strategies.get("PRIORITY_BASED");
+        Coordinates dummyStartPoint = new Coordinates(42.6629, 21.1655); // Default Prishtina
+        return strategy.calculateRoute(containers, dummyStartPoint);
     }
     
     /**
-     * Algoritmi Nearest Neighbor për route optimization.
-     * Time complexity: O(n²)
+     * Shton një strategji të re në runtime (për extensibility).
      * 
-     * @param containers Lista e kontejnerëve
-     * @param startPoint Pika e fillimit
-     * @return Lista e renditur
+     * @param strategyName Emri i strategjisë
+     * @param strategy Strategjia
      */
-    private List<Kontenier> nearestNeighborRoute(
-            List<Kontenier> containers,
-            Coordinates startPoint
-    ) {
-        List<Kontenier> route = new ArrayList<>();
-        Set<String> visited = new HashSet<>();
-        Coordinates currentPosition = startPoint;
-        
-        while (visited.size() < containers.size()) {
-            // Gjen kontejnerin më të afërt që nuk është vizituar
-            Kontenier nearest = null;
-            double minDistance = Double.MAX_VALUE;
-            
-            for (Kontenier container : containers) {
-                if (visited.contains(container.getId())) {
-                    continue;
-                }
-                
-                double distance = currentPosition.distanceTo(container.getLocation());
-                
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearest = container;
-                }
-            }
-            
-            if (nearest != null) {
-                route.add(nearest);
-                visited.add(nearest.getId());
-                currentPosition = nearest.getLocation();
-            }
-        }
-        
-        return route;
+    public void addStrategy(String strategyName, RouteStrategy strategy) {
+        logger.info(String.format("Adding new route strategy: %s", strategyName));
+        strategies.put(strategyName.toUpperCase(), strategy);
+    }
+    
+    /**
+     * Kthen listën e strategjive të disponueshme.
+     * 
+     * @return Set i emrave të strategjive
+     */
+    public Set<String> getAvailableStrategies() {
+        return new HashSet<>(strategies.keySet());
     }
     
     /**

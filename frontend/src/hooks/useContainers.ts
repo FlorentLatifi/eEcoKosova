@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getAllContainers, updateFillLevel } from '../services/api';
+import { getAllContainers, updateFillLevel, ApiError } from '../services/api';
 import type { Container } from '../services/api';
 import { isCritical, isWarning, isNormal } from '../utils/thresholdUtils';
+import { useToast } from '../context/ToastContext';
 
 interface Statistics {
   total: number;
@@ -24,6 +25,7 @@ export const useContainers = (refreshInterval?: number): UseContainersReturn => 
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showError, showSuccess } = useToast();
 
   // Get refresh interval from settings or use default
   const getRefreshInterval = () => {
@@ -49,9 +51,13 @@ export const useContainers = (refreshInterval?: number): UseContainersReturn => 
       setContainers(data);
       setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = err instanceof ApiError 
+        ? err.message 
+        : err instanceof Error 
+        ? err.message 
+        : 'Dështoi marrja e kontejnerëve';
       setError(errorMessage);
-      console.error('Failed to fetch containers:', err);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -61,10 +67,15 @@ export const useContainers = (refreshInterval?: number): UseContainersReturn => 
     try {
       await updateFillLevel(containerId, newFillLevel);
       await fetchContainers();
+      showSuccess('Niveli i mbushjes u përditësua me sukses');
       return { success: true };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Failed to update container:', err);
+      const errorMessage = err instanceof ApiError 
+        ? err.message 
+        : err instanceof Error 
+        ? err.message 
+        : 'Dështoi përditësimi i nivelit të mbushjes';
+      showError(errorMessage);
       return { success: false, error: errorMessage };
     }
   };

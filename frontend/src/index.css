@@ -59,3 +59,16 @@ body {
   background-color: rgb(254 226 226);
   color: rgb(153 27 27);
 }
+
+/* Leaflet Map Styles */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+}
+
+.custom-marker,
+.cluster-marker {
+  background: transparent !important;
+  border: none !important;
+}
