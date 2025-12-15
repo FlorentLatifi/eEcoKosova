@@ -140,8 +140,73 @@ Duhet të shtohen në:
 ## 📝 SHËNIME
 
 - Të gjitha backend endpoints janë gati dhe funksionale
-- Frontend duhet të integrohet me këto endpoints
-- Validation duhet të shtohet edhe në frontend
-- Error handling duhet të jetë i plotë
-- Success notifications do të përmirësojnë UX
+- Frontend është i sinkronizuar me këto endpoints (naming + schema)
+- Validation ekziston si në backend (Jakarta Validation) ashtu edhe në frontend (react-hook-form/zod)
+- Global error handler kthen strukturë uniforme (`status`, `code`, `message`, `errors[]`)
+- Success/error notifications në frontend përmirësojnë UX
+
+---
+
+## 🔄 Mapping Backend ↔ Frontend (fushat kryesore)
+
+### Containers
+
+| Backend DTO / Fusha                 | Frontend Model (`Container` nga `api.ts`) | Shënime                      |
+|-------------------------------------|-------------------------------------------|------------------------------|
+| `ContainerResponseDTO.id`           | `id`                                      | string                       |
+| `ContainerResponseDTO.zoneId`       | `zoneId`                                  | string                       |
+| `ContainerResponseDTO.type`         | `type`                                    | string (display name)        |
+| `ContainerResponseDTO.fillLevel`    | `fillLevel`                               | number (0-100)               |
+| `ContainerResponseDTO.status`       | `status`                                  | string (display name)        |
+| `ContainerResponseDTO.capacity`     | `capacity`                                | number (liters)              |
+| `ContainerResponseDTO.operational`  | `operational`                             | boolean                      |
+| `ContainerResponseDTO.latitude`     | `latitude`                                | number                       |
+| `ContainerResponseDTO.longitude`    | `longitude`                               | number                       |
+| `ContainerResponseDTO.address`      | `address`                                 | string (full address)        |
+| `ContainerResponseDTO.needsCollection` | `needsCollection`                       | boolean                      |
+
+### Zones (lista e zonave)
+
+| Backend DTO / Fusha          | Frontend Model (`Zone`)          | Shënime                      |
+|------------------------------|----------------------------------|------------------------------|
+| `ZoneDTO.id`                 | `id`                             | string                       |
+| `ZoneDTO.name`               | `name`                           | string                       |
+| `ZoneDTO.criticalThreshold`  | `criticalThreshold`              | number                       |
+| `ZoneDTO.containerIds`       | `containerIds`                   | string[]                     |
+| `ZoneDTO.status`             | `status`                         | string (display name)        |
+| `ZoneDTO.centerPoint.latitude`  | `centerPoint.latitude`        | number                       |
+| `ZoneDTO.centerPoint.longitude` | `centerPoint.longitude`       | number                       |
+
+### Zone Statistics
+
+| Backend DTO / Fusha                | Frontend Model (`ZoneStatistics`) | Shënime                      |
+|------------------------------------|-----------------------------------|------------------------------|
+| `ZoneStatisticsDTO.zoneId`        | `zoneId`                          | string                       |
+| `ZoneStatisticsDTO.zoneName`      | `zoneName`                        | string                       |
+| `ZoneStatisticsDTO.totalContainers` | `totalContainers`               | number                       |
+| `ZoneStatisticsDTO.criticalContainers` | `criticalContainers`         | number                       |
+| `ZoneStatisticsDTO.operationalContainers` | `operationalContainers`   | number                       |
+| `ZoneStatisticsDTO.averageFillLevel` | `averageFillLevel`            | number (0-100)               |
+| `ZoneStatisticsDTO.status`        | `status`                          | string (display name)        |
+
+### Qytetarët (Users)
+
+| Backend DTO / Fusha       | Frontend Model (`Qytetari`) | Shënime                            |
+|---------------------------|-----------------------------|------------------------------------|
+| `QytetariDTO.id`          | `id`                        | string                             |
+| `QytetariDTO.name`        | `name`                      | string                             |
+| `QytetariDTO.address`     | `address`                   | string (mund të jetë `null`)       |
+| `QytetariDTO.createdAt`   | `createdAt`                 | string ISO-8601 (Instant)          |
+| `QytetariDTO.lastUpdated` | `lastUpdated`               | string ISO-8601 (Instant)          |
+
+### Reports
+
+| Backend DTO / Fusha        | Frontend Model (`Report`) | Shënime                             |
+|----------------------------|---------------------------|-------------------------------------|
+| `ReportDTO.id`             | `id`                      | string                             |
+| `ReportDTO.title`          | `title`                   | string                             |
+| `ReportDTO.description`    | `description`             | string                             |
+| `ReportDTO.type`           | `type`                    | string (`GENERAL`, `CRITICAL`, ...) |
+| `ReportDTO.generatedAt`    | `generatedAt`             | string ISO-8601                     |
+| `ReportDTO.data`           | `data`                    | `any` / `Map<String, Object>`       |
 

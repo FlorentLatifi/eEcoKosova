@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @ControllerAdvice
@@ -20,15 +22,18 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             WebRequest request
     ) {
-        Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR");
+        Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Validation failed");
 
-        Map<String, String> fieldErrors = new HashMap<>();
+        List<Map<String, Object>> errors = new ArrayList<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String field = error instanceof FieldError fe ? fe.getField() : error.getObjectName();
             String message = error.getDefaultMessage();
-            fieldErrors.put(field, message);
+            Map<String, Object> errorItem = new HashMap<>();
+            errorItem.put("field", field);
+            errorItem.put("message", message);
+            errors.add(errorItem);
         });
-        body.put("details", fieldErrors);
+        body.put("errors", errors);
         return ResponseEntity.badRequest().body(body);
     }
 
@@ -37,8 +42,7 @@ public class GlobalExceptionHandler {
             IllegalArgumentException ex,
             WebRequest request
     ) {
-        Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST, "BAD_REQUEST");
-        body.put("message", ex.getMessage());
+        Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
         return ResponseEntity.badRequest().body(body);
     }
 
@@ -47,17 +51,16 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request
     ) {
-        Map<String, Object> body = baseBody(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR");
-        body.put("message", ex.getMessage());
+        Map<String, Object> body = baseBody(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
-    private Map<String, Object> baseBody(HttpStatus status, String code) {
+    private Map<String, Object> baseBody(HttpStatus status, String code, String message) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", Instant.now().toString());
         body.put("status", status.value());
         body.put("code", code);
-        body.put("message", status.getReasonPhrase());
+        body.put("message", message != null ? message : status.getReasonPhrase());
         return body;
     }
 }
