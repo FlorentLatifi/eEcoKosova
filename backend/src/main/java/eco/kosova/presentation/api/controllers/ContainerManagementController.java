@@ -16,6 +16,7 @@ import eco.kosova.application.queries.GetContainerByIdQuery;
 import eco.kosova.application.queries.GetContainersByZoneQuery;
 import eco.kosova.domain.models.Kontenier;
 import eco.kosova.presentation.dtos.ContainerResponseDTO;
+import eco.kosova.presentation.dtos.CreateContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -59,34 +60,26 @@ public class ContainerManagementController {
      */
     @PostMapping
     public ResponseEntity<ContainerResponseDTO> createContainer(
-            @RequestBody Map<String, Object> request
+            @org.springframework.web.bind.annotation.RequestBody
+            @jakarta.validation.Valid CreateContainerRequest request
     ) {
-        try {
-            CreateContainerCommand command = new CreateContainerCommand(
-                (String) request.get("id"),
-                (String) request.get("zoneId"),
-                (String) request.get("type"),
-                ((Number) request.getOrDefault("capacity", 1000)).intValue(),
-                ((Number) request.getOrDefault("latitude", 42.6629)).doubleValue(),
-                ((Number) request.getOrDefault("longitude", 21.1655)).doubleValue(),
-                (String) request.get("street"),
-                (String) request.get("city"),
-                (String) request.get("municipality"),
-                (String) request.getOrDefault("postalCode", ""),
-                (Boolean) request.getOrDefault("operational", true)
-            );
-            
-            Kontenier container = createHandler.handle(command);
-            
-            // Kthen kontejnerin e krijuar
-            ContainerResponseDTO dto = toDTO(container);
-            return ResponseEntity.ok(dto);
-            
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        CreateContainerCommand command = new CreateContainerCommand(
+            request.getId(),
+            request.getZoneId(),
+            request.getType(),
+            request.getCapacity(),
+            request.getLatitude(),
+            request.getLongitude(),
+            request.getStreet(),
+            request.getCity(),
+            request.getMunicipality(),
+            request.getPostalCode(),
+            request.isOperational()
+        );
+
+        Kontenier container = createHandler.handle(command);
+        ContainerResponseDTO dto = toDTO(container);
+        return ResponseEntity.ok(dto);
     }
     
     /**

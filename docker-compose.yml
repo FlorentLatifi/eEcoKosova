@@ -6,7 +6,7 @@ services:
     container_name: ecokosova-mssql
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourStrong!Passw0rd
+      - SA_PASSWORD=${MSSQL_SA_PASSWORD}
       - MSSQL_PID=Developer
     ports:
       - "1433:1433"
@@ -28,8 +28,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - ECOKOSOVA_DATA_DIRECTORY=/app/data
       - spring.datasource.url=jdbc:sqlserver://mssql:1433;databaseName=EcoKosova;encrypt=false;trustServerCertificate=true
-      - spring.datasource.username=sa
-      - spring.datasource.password=YourStrong!Passw0rd
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
     volumes:
       - ./backend/src/main/resources/data:/app/data
     healthcheck:

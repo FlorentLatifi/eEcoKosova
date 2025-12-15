@@ -94,6 +94,7 @@ ecokosova/
 - Maven 3.8+
 - Node.js 18+
 - npm 9+
+- MSSQL Server (ose Docker me SQL Server)
 
 ### Backend Setup
 
@@ -101,7 +102,10 @@ ecokosova/
 # Navigate to backend
 cd backend
 
-# Install dependencies & build
+# Full build me teste
+mvn -DskipTests=false clean package
+
+# Ose gjatë zhvillimit (pa teste)
 mvn clean install
 
 # Run application
@@ -109,6 +113,21 @@ mvn spring-boot:run
 ```
 
 Backend do të startohet në: `http://localhost:8080`
+
+#### Konfigurimi i databazës (MSSQL)
+
+- `backend/src/main/resources/application.properties` përdor variabla mjedisi:
+  - `SPRING_DATASOURCE_USERNAME` (default `sa`)
+  - `SPRING_DATASOURCE_PASSWORD` (pa default – duhet vendosur)
+- Për development, mund të krijosh një file `.env` (mos e commito) duke u bazuar në `docker-compose.yml`, p.sh.:
+
+```bash
+MSSQL_SA_PASSWORD=ChangeThisStrongPassword123!
+SPRING_DATASOURCE_USERNAME=sa
+SPRING_DATASOURCE_PASSWORD=ChangeThisStrongPassword123!
+```
+
+Spring Boot do të lexojë këto si environment variables kur starton në Docker.
 
 ### Frontend Setup
 
@@ -119,11 +138,23 @@ cd frontend
 # Install dependencies
 npm install
 
+# Build për production
+npm run build
+
 # Run development server
 npm run dev
 ```
 
 Frontend do të startohet në: `http://localhost:3000`
+
+## 🗄️ Startimi i plotë me Docker (backend + frontend + MSSQL)
+
+```bash
+docker-compose up --build
+```
+
+- MSSQL ruan fajllat në folderin `mssql-data/` në root të projektit.
+- Backend lidhet me databazën `EcoKosova` në MSSQL duke përdorur variablat e mjedisit të konfiguruara.
 
 ## 📡 API Endpoints
 
