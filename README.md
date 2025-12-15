@@ -200,9 +200,17 @@ mvn test jacoco:report
 
 ## 📚 Dokumentacioni
 
-- [Software Architecture Document (SAD)](docs/SAD.pdf)
-- [Detailed Design Document (DDD)](docs/DDD.pdf)
-- [Conceptual Model](docs/ConceptualModel.pdf)
+- **SAD (Software Architecture Document)**: `docs/SAD/SADEcoKosova.docx`
+- **Detailed Design (DDD)**: `docs/DDD/DDD EcoKosova Waste Management System (1).docx`
+- **Conceptual Model**: `docs/Conceptual/Dokumentimi i Modelit Konceptual.txt` dhe `docs/Conceptual/EcoKosova - Conceptual Model.drawio`
+- **Demo & skenarë testimi**: `docs/DEMO.md`
+- **Guides teknike** (në root):
+  - `START_GUIDE.md` – si të startosh backend + frontend
+  - `HOW_TO_START.md` – version i shkurtuar i komandave kryesore
+  - `CRUD_IMPLEMENTIMI.md` – përmbledhje e CRUD endpoints + mapping backend/frontend
+  - `INTEGRIMI_END_TO_END.md` – integrimi komplet frontend-backend-DB
+  - `DEMONSTRIMI_I_PROJEKTIT.md` – udhëzime për demonstrim
+  - `STATUS_IMPLEMENTIMI.md` – status i kërkesave dhe implementimeve
 
 ## 📄 Licenca
 

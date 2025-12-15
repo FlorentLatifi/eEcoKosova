@@ -16,6 +16,7 @@ import {
   type ZoneStatistics,
   type Zone,
 } from "../services/api";
+import { useCsvExport } from "../utils/csvExport";
 import CreateZoneModal from "../components/CreateZoneModal";
 import EditZoneModal from "../components/EditZoneModal";
 import DeleteZoneModal from "../components/DeleteZoneModal";
@@ -28,6 +29,7 @@ const ZonesPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingZone, setEditingZone] = useState<Zone | null>(null);
   const [deletingZone, setDeletingZone] = useState<Zone | null>(null);
+  const { exportZonesToCSV } = useCsvExport();
 
   useEffect(() => {
     fetchZones();
@@ -83,27 +85,37 @@ const ZonesPage: React.FC = () => {
       {/* Summary Cards */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Zona</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {zones.length}
-              </p>
-            </div>
-            <div className="bg-eco-blue bg-opacity-10 rounded-full p-4">
-              <Map className="w-8 h-8 text-eco-blue" />
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Zona</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {zones.length}
+                </p>
+              </div>
+              <div className="bg-eco-blue bg-opacity-10 rounded-full p-4">
+                <Map className="w-8 h-8 text-eco-blue" />
+              </div>
             </div>
           </div>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-eco-blue text-white rounded-lg hover:bg-blue-600 transition-colors self-end"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Shto Zonë</span>
-        </button>
+        <div className="flex gap-3 self-end">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-eco-blue text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Shto Zonë</span>
+          </button>
+          <button
+            onClick={() => exportZonesToCSV(zones)}
+            className="flex items-center space-x-2 px-4 py-2 bg-eco-green text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <Map className="w-5 h-5" />
+            <span>Eksporto CSV</span>
+          </button>
+        </div>
       </div>
 
         <div className="bg-white rounded-lg shadow p-6">

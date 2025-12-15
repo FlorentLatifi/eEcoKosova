@@ -10,13 +10,15 @@ import {
   RefreshCw,
   Map,
 } from "lucide-react";
-import { getReports, generateReport, type Report } from "../services/api";
+import { getReports, generateReport, type Report, ApiError } from "../services/api";
+import { useToast } from "../context/ToastContext";
 
 const ReportsPage: React.FC = () => {
   const [availableReports, setAvailableReports] = useState<Report[]>([]);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const { showError, showSuccess } = useToast();
 
   useEffect(() => {
     fetchReports();
@@ -28,7 +30,11 @@ const ReportsPage: React.FC = () => {
       const reports = await getReports();
       setAvailableReports(reports);
     } catch (error) {
-      console.error("Error fetching reports:", error);
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : "Gabim gjatë marrjes së raporteve";
+      showError(message);
     } finally {
       setLoading(false);
     }
@@ -39,9 +45,13 @@ const ReportsPage: React.FC = () => {
       setGenerating(true);
       const report = await generateReport(reportType);
       setSelectedReport(report);
+      showSuccess("Raporti u gjenerua me sukses!");
     } catch (error) {
-      console.error("Error generating report:", error);
-      alert("Gabim në gjenerimin e raportit!");
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : "Gabim në gjenerimin e raportit!";
+      showError(message);
     } finally {
       setGenerating(false);
     }

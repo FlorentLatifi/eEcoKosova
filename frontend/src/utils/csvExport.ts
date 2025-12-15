@@ -1,10 +1,15 @@
 import type { Container } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
-export const exportContainersToCSV = (containers: Container[], filename: string = 'kontejneret') => {
-  if (containers.length === 0) {
-    alert('Nuk ka të dhëna për eksportim');
-    return;
-  }
+// Helper hook për të eksportuar me toast feedback
+export const useCsvExport = () => {
+  const { showError, showSuccess } = useToast();
+
+  const exportContainersToCSV = (containers: Container[], filename: string = 'kontejneret') => {
+    if (containers.length === 0) {
+      showError('Nuk ka të dhëna për eksportim');
+      return;
+    }
 
   // CSV Header
   const headers = [
@@ -52,13 +57,15 @@ export const exportContainersToCSV = (containers: Container[], filename: string 
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-};
 
-export const exportZonesToCSV = (zones: any[], filename: string = 'zonat') => {
-  if (zones.length === 0) {
-    alert('Nuk ka të dhëna për eksportim');
-    return;
-  }
+    showSuccess('Eksporti i kontejnerëve u krye me sukses!');
+  };
+
+  const exportZonesToCSV = (zones: any[], filename: string = 'zonat') => {
+    if (zones.length === 0) {
+      showError('Nuk ka të dhëna për eksportim');
+      return;
+    }
 
   const headers = [
     'Zona ID',
@@ -94,5 +101,13 @@ export const exportZonesToCSV = (zones: any[], filename: string = 'zonat') => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+
+    showSuccess('Eksporti i zonave u krye me sukses!');
+  };
+
+  return {
+    exportContainersToCSV,
+    exportZonesToCSV,
+  };
 };
 

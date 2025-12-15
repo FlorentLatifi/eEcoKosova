@@ -37,6 +37,18 @@ Started EcoKosovaApplication in X.XXX seconds
 - `http://localhost:8080/api/monitoring/containers`
 - `http://localhost:8080/api/zones/statistics`
 
+### 📦 Flyway migrations & seed
+
+- Migrations ekzekutohen automatikisht në start të Spring Boot (Flyway është konfiguruar në `pom.xml`).
+- Skedarët gjenden në: `backend/src/main/resources/db/migration`
+  - `V1__init_schema.sql` – krijon tabelat kryesore (`Zones`, `Containers`, etj.)
+  - `V2__add_indexes.sql` – indekse për performancë
+  - `V3__seed_admin_and_test_data.sql` – zona + kontejnerë test për demo (p.sh. `ZONE-001`, `CONT-001`, `CONT-002`, `CONT-003`)
+- Për të rishkarkuar seed-in nga e para gjatë zhvillimit:
+  1. Fshij databazën `EcoKosova` ose tabelat kryesore nga MSSQL
+  2. Ristarto backend-in (`mvn spring-boot:run`)
+  3. Flyway do të aplikojë të gjitha migrimet dhe do të fusë përsëri të dhënat test.
+
 ---
 
 ## 🎨 HAPI 2: Starto Frontend (React + Vite)

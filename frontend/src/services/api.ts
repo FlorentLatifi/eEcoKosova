@@ -146,10 +146,31 @@ export interface Report {
 const handleApiError = (error: unknown, context: string): never => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError;
+
+    // Provo të lexosh strukturën uniforme të error-it nga backend
+    const data: any = axiosError.response?.data;
+    let message = axiosError.message || `Error in ${context}`;
+
+    if (data) {
+      if (typeof data.message === 'string') {
+        message = data.message;
+      }
+
+      // Në rast VALIDATION_ERROR, mbledh mesazhet e fushave
+      if (Array.isArray(data.errors)) {
+        const fieldMessages = data.errors
+          .map((e: any) => (e && e.message ? String(e.message) : ''))
+          .filter((m: string) => m.length > 0);
+        if (fieldMessages.length > 0) {
+          message = fieldMessages.join(' • ');
+        }
+      }
+    }
+
     throw new ApiError(
-      axiosError.message || `Error in ${context}`,
+      message,
       axiosError.response?.status,
-      axiosError.response?.data
+      data
     );
   }
   throw new ApiError(`Unexpected error in ${context}`);

@@ -3,7 +3,7 @@ import { useContainers } from "../hooks/useContainers";
 import { Search, Download, MapPin, Plus, Edit, Trash2 } from "lucide-react";
 import type { Container } from "../services/api";
 import ContainerDetails from "../components/ContainerDetails";
-import { exportContainersToCSV } from "../utils/csvExport";
+import { useCsvExport } from "../utils/csvExport";
 import {
   isCritical,
   isWarning,
@@ -28,6 +28,7 @@ const ContainersPage: React.FC = () => {
   const [deletingContainerId, setDeletingContainerId] = useState<string | null>(
     null
   );
+  const { exportContainersToCSV } = useCsvExport();
 
   const filteredContainers = containers.filter((container) => {
     const matchesSearch =
