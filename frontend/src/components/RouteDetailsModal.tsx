@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, MapPin, Clock, Navigation, TrendingUp, AlertTriangle } from 'lucide-react';
 import type { Route } from '../services/api';
+import { getStatusColor, isCritical, isWarning } from '../utils/thresholdUtils';
 
 interface RouteDetailsModalProps {
   route: Route | null;

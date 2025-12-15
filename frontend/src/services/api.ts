@@ -1,4 +1,5 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosError } from 'axios';
+import type { AxiosResponse } from 'axios';
 
 // Lexo API_BASE_URL nga environment variable ose përdor default
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -149,6 +150,8 @@ export const getAllContainers = async (): Promise<Container[]> => {
     return response.data;
   } catch (error) {
     handleApiError(error, 'getAllContainers');
+    // handleApiError always throws, so this is unreachable
+    return [] as never;
   }
 };
 

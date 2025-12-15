@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getAllContainers, type Container } from '../services/api';
+import { getAllContainers } from '../services/api';
 import { isCritical } from '../utils/thresholdUtils';
 
 export interface Notification {
@@ -49,6 +49,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [notifications]);
 
+  const addNotification = useCallback(
+    (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+      const newNotification: Notification = {
+        ...notification,
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        read: false,
+      };
+      setNotifications((prev) => [newNotification, ...prev].slice(0, 50)); // Keep last 50
+    },
+    []
+  );
+
   // Check for critical containers periodically
   useEffect(() => {
     const checkCriticalContainers = async () => {
@@ -83,19 +96,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const interval = setInterval(checkCriticalContainers, 30000);
     return () => clearInterval(interval);
   }, [notifications, addNotification]);
-
-  const addNotification = useCallback(
-    (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
-      const newNotification: Notification = {
-        ...notification,
-        id: Date.now().toString(),
-        timestamp: new Date(),
-        read: false,
-      };
-      setNotifications((prev) => [newNotification, ...prev].slice(0, 50)); // Keep last 50
-    },
-    []
-  );
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>
