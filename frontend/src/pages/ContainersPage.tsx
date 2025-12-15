@@ -1,16 +1,31 @@
 import React, { useState } from "react";
 import { useContainers } from "../hooks/useContainers";
-import { Search, Filter, Download, MapPin, Activity } from "lucide-react";
+import { Search, Download, MapPin, Plus, Edit, Trash2 } from "lucide-react";
 import type { Container } from "../services/api";
 import ContainerDetails from "../components/ContainerDetails";
 import { exportContainersToCSV } from "../utils/csvExport";
-import { isCritical, isWarning, isNormal, getStatusBadge } from "../utils/thresholdUtils";
+import {
+  isCritical,
+  isWarning,
+  isNormal,
+  getStatusBadge,
+} from "../utils/thresholdUtils";
+import CreateContainerModal from "../components/CreateContainerModal";
+import EditContainerModal from "../components/EditContainerModal";
+import DeleteContainerModal from "../components/DeleteContainerModal";
 
 const ContainersPage: React.FC = () => {
   const { containers, loading, statistics, refresh } = useContainers(30000);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedContainer, setSelectedContainer] = useState<Container | null>(
+    null
+  );
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingContainer, setEditingContainer] = useState<Container | null>(
+    null
+  );
+  const [deletingContainerId, setDeletingContainerId] = useState<string | null>(
     null
   );
 
@@ -32,7 +47,8 @@ const ContainersPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm text-gray-600">Total Kontejnerë</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">
@@ -57,12 +73,29 @@ const ContainersPage: React.FC = () => {
             {statistics.normal}
           </p>
         </div>
+        </div>
+        <div className="flex gap-3 self-end">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-eco-blue text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Shto Kontejner</span>
+          </button>
+          <button
+            onClick={() => exportContainersToCSV(filteredContainers)}
+            className="flex items-center space-x-2 px-4 py-2 bg-eco-green text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <Download className="w-5 h-5" />
+            <span>Eksporto CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow p-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 flex-1">
             <div className="relative flex-1 md:w-80">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -85,14 +118,6 @@ const ContainersPage: React.FC = () => {
               <option value="normal">Normal</option>
             </select>
           </div>
-
-          <button
-            onClick={() => exportContainersToCSV(filteredContainers)}
-            className="flex items-center space-x-2 px-4 py-2 bg-eco-green text-white rounded-lg hover:bg-green-600 transition-colors"
-          >
-            <Download className="w-5 h-5" />
-            <span>Eksporto CSV</span>
-          </button>
         </div>
       </div>
 
@@ -185,12 +210,26 @@ const ContainersPage: React.FC = () => {
                       {container.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                     <button
                       onClick={() => setSelectedContainer(container)}
-                      className="text-eco-blue hover:text-blue-700"
+                      className="text-eco-blue hover:text-blue-700 inline-flex items-center gap-1"
                     >
                       Detaje
+                    </button>
+                    <button
+                      onClick={() => setEditingContainer(container)}
+                      className="text-amber-600 hover:text-amber-700 inline-flex items-center gap-1"
+                      title="Përditëso"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeletingContainerId(container.id)}
+                      className="text-red-600 hover:text-red-700 inline-flex items-center gap-1"
+                      title="Fshi"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>
@@ -208,6 +247,24 @@ const ContainersPage: React.FC = () => {
           onUpdate={refresh}
         />
       )}
+
+      <CreateContainerModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={refresh}
+      />
+
+      <EditContainerModal
+        container={editingContainer}
+        onClose={() => setEditingContainer(null)}
+        onUpdated={refresh}
+      />
+
+      <DeleteContainerModal
+        containerId={deletingContainerId}
+        onClose={() => setDeletingContainerId(null)}
+        onDeleted={refresh}
+      />
     </div>
   );
 };

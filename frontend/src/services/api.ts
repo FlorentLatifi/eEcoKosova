@@ -110,6 +110,18 @@ export interface ZoneStatistics {
   status: string;
 }
 
+export interface Zone {
+  id: string;
+  name: string;
+  criticalThreshold: number;
+  containerIds: string[];
+  status: string;
+  centerPoint: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
 export interface Route {
   zoneId: string;
   zoneName: string;
@@ -334,9 +346,9 @@ export const emptyContainer = async (containerId: string): Promise<string> => {
 };
 
 // Zone Management Functions
-export const getAllZones = async (): Promise<any[]> => {
+export const getAllZones = async (): Promise<Zone[]> => {
   try {
-    const response = await api.get<any[]>('/zones');
+    const response = await api.get<Zone[]>('/zones');
     return response.data;
   } catch (error) {
     handleApiError(error, 'getAllZones');

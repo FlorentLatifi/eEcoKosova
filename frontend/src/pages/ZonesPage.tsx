@@ -6,13 +6,28 @@ import {
   AlertTriangle,
   CheckCircle,
   X,
+  Plus,
+  Edit,
+  Trash2,
 } from "lucide-react";
-import { getZoneStatistics, type ZoneStatistics } from "../services/api";
+import {
+  getZoneStatistics,
+  getAllZones,
+  type ZoneStatistics,
+  type Zone,
+} from "../services/api";
+import CreateZoneModal from "../components/CreateZoneModal";
+import EditZoneModal from "../components/EditZoneModal";
+import DeleteZoneModal from "../components/DeleteZoneModal";
 
 const ZonesPage: React.FC = () => {
   const [zones, setZones] = useState<ZoneStatistics[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedZone, setSelectedZone] = useState<ZoneStatistics | null>(null);
+  const [allZones, setAllZones] = useState<Zone[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingZone, setEditingZone] = useState<Zone | null>(null);
+  const [deletingZone, setDeletingZone] = useState<Zone | null>(null);
 
   useEffect(() => {
     fetchZones();
@@ -21,8 +36,14 @@ const ZonesPage: React.FC = () => {
   const fetchZones = async () => {
     try {
       setLoading(true);
-      const data = await getZoneStatistics();
-      setZones(data);
+      const stats = await getZoneStatistics();
+      if (stats) {
+        setZones(stats);
+      }
+      const zoneList = await getAllZones();
+      if (zoneList) {
+        setAllZones(zoneList);
+      }
     } catch (error) {
       console.error("Error fetching zones:", error);
     } finally {
@@ -60,7 +81,8 @@ const ZonesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -74,6 +96,15 @@ const ZonesPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-eco-blue text-white rounded-lg hover:bg-blue-600 transition-colors self-end"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Shto Zonë</span>
+        </button>
+      </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
@@ -124,13 +155,39 @@ const ZonesPage: React.FC = () => {
                   </h3>
                   <p className="text-sm text-gray-500">{zone.zoneId}</p>
                 </div>
-                <span
-                  className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(
-                    zone.status
-                  )}`}
-                >
-                  {zone.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(
+                      zone.status
+                    )}`}
+                  >
+                    {zone.status}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const fullZone = allZones.find((z) => z.id === zone.zoneId) || null;
+                      setEditingZone(fullZone);
+                    }}
+                    className="p-1 rounded-lg text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                    title="Përditëso Zonën"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const fullZone = allZones.find((z) => z.id === zone.zoneId) || null;
+                      setDeletingZone(fullZone);
+                    }}
+                    className="p-1 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Fshi Zonën"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Stats */}
@@ -343,19 +400,44 @@ const ZonesPage: React.FC = () => {
               {/* Action Buttons */}
               <div className="flex space-x-3">
                 <button
+                  onClick={() => {
+                    const fullZone =
+                      allZones.find((z) => z.id === selectedZone.zoneId) || null;
+                    setEditingZone(fullZone);
+                  }}
+                  className="flex-1 bg-eco-blue text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                >
+                  Përditëso Zonën
+                </button>
+                <button
                   onClick={() => setSelectedZone(null)}
                   className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                 >
                   Mbyll
-                </button>
-                <button className="flex-1 bg-eco-blue text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium">
-                  Shiko Kontejnerët
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <CreateZoneModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={fetchZones}
+      />
+
+      <EditZoneModal
+        zone={editingZone}
+        onClose={() => setEditingZone(null)}
+        onUpdated={fetchZones}
+      />
+
+      <DeleteZoneModal
+        zone={deletingZone}
+        onClose={() => setDeletingZone(null)}
+        onDeleted={fetchZones}
+      />
     </div>
   );
 };
