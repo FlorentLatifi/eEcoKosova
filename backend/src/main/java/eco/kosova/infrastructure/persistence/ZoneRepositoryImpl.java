@@ -1,178 +1,155 @@
 package eco.kosova.infrastructure.persistence;
 
-import com.google.gson.reflect.TypeToken;
 import eco.kosova.domain.models.Zone;
 import eco.kosova.domain.models.valueobjects.Coordinates;
 import eco.kosova.domain.models.valueobjects.ZoneStatus;
 import eco.kosova.domain.repositories.ZoneRepository;
-import eco.kosova.infrastructure.persistence.dto.ZoneDTO;
+import eco.kosova.infrastructure.persistence.jpa.ZoneEntity;
+import eco.kosova.infrastructure.persistence.jpa.ZoneEntityRepository;
 import org.springframework.stereotype.Repository;
 
-import java.lang.reflect.Type;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Implementation e ZoneRepository që përdor JSON për persistence.
+ * Implementation e ZoneRepository që përdor MSSQL (JPA) për persistence.
  */
 @Repository
 public class ZoneRepositoryImpl implements ZoneRepository {
     
-    private static final String ZONES_FILE = "zones.json";
-    private final JsonDataManager dataManager;
-    private final Map<String, Zone> cache;
+    private final ZoneEntityRepository zoneEntityRepository;
     
-    public ZoneRepositoryImpl(JsonDataManager dataManager) {
-        this.dataManager = dataManager;
-        this.cache = new ConcurrentHashMap<>();
-        loadFromFile();
+    public ZoneRepositoryImpl(ZoneEntityRepository zoneEntityRepository) {
+        this.zoneEntityRepository = zoneEntityRepository;
     }
     
     @Override
     public Optional<Zone> findById(String id) {
-        return Optional.ofNullable(cache.get(id));
+        return zoneEntityRepository.findById(id).map(this::toDomain);
     }
     
     @Override
     public List<Zone> findAll() {
-        return new ArrayList<>(cache.values());
+        return zoneEntityRepository.findAll().stream()
+            .map(this::toDomain)
+            .collect(Collectors.toList());
     }
     
     @Override
     public List<Zone> findByMunicipality(String municipality) {
-        return cache.values().stream()
-            .filter(z -> z.getMunicipality().equalsIgnoreCase(municipality))
+        return zoneEntityRepository.findByMunicipalityIgnoreCase(municipality).stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Zone> findByStatus(ZoneStatus status) {
-        return cache.values().stream()
-            .filter(z -> z.getStatus() == status)
+        return zoneEntityRepository.findByStatus(status.name()).stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Zone> findCriticalZones() {
-        return cache.values().stream()
-            .filter(z -> z.getStatus() == ZoneStatus.CRITICAL)
+        return zoneEntityRepository.findCriticalZones().stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Zone> findActiveZones() {
-        return cache.values().stream()
-            .filter(Zone::isActive)
+        return zoneEntityRepository.findActiveZones().stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public Optional<Zone> findByContainerId(String containerId) {
-        return cache.values().stream()
-            .filter(z -> z.containsContainer(containerId))
-            .findFirst();
+        return zoneEntityRepository.findByContainerId(containerId).map(this::toDomain);
     }
     
     @Override
     public Zone save(Zone zone) {
-        cache.put(zone.getId(), zone);
-        saveToFile();
+        ZoneEntity entity = toEntity(zone);
+        zoneEntityRepository.save(entity);
         return zone;
     }
     
     @Override
     public List<Zone> saveAll(List<Zone> zones) {
-        zones.forEach(z -> cache.put(z.getId(), z));
-        saveToFile();
+        List<ZoneEntity> entities = zones.stream()
+            .map(this::toEntity)
+            .collect(Collectors.toList());
+        zoneEntityRepository.saveAll(entities);
         return zones;
     }
     
     @Override
     public boolean deleteById(String id) {
-        boolean existed = cache.remove(id) != null;
+        boolean existed = zoneEntityRepository.existsById(id);
         if (existed) {
-            saveToFile();
+            zoneEntityRepository.deleteById(id);
         }
         return existed;
     }
     
     @Override
     public boolean existsById(String id) {
-        return cache.containsKey(id);
+        return zoneEntityRepository.existsById(id);
     }
     
     @Override
     public long count() {
-        return cache.size();
+        return zoneEntityRepository.count();
     }
     
     @Override
     public long countActive() {
-        return cache.values().stream()
-            .filter(Zone::isActive)
-            .count();
+        return zoneEntityRepository.countActive();
     }
     
     @Override
     public long countCritical() {
-        return cache.values().stream()
-            .filter(z -> z.getStatus() == ZoneStatus.CRITICAL)
-            .count();
+        return zoneEntityRepository.countCritical();
     }
     
     // ========== PRIVATE HELPER METHODS ==========
     
-    private void loadFromFile() {
-        Type listType = new TypeToken<List<ZoneDTO>>(){}.getType();
-        List<ZoneDTO> dtos = dataManager.readList(ZONES_FILE, listType);
+    private Zone toDomain(ZoneEntity entity) {
+        Coordinates centerPoint = new Coordinates(entity.getLatitude(), entity.getLongitude());
+        ZoneStatus status = ZoneStatus.valueOf(entity.getStatus());
         
-        dtos.forEach(dto -> {
-            Zone zone = fromDTO(dto);
-            cache.put(zone.getId(), zone);
-        });
-    }
-    
-    private void saveToFile() {
-        List<ZoneDTO> dtos = cache.values().stream()
-            .map(this::toDTO)
-            .collect(Collectors.toList());
-        
-        dataManager.writeList(ZONES_FILE, dtos);
-    }
-    
-    private Zone fromDTO(ZoneDTO dto) {
-        Coordinates centerPoint = new Coordinates(dto.getLatitude(), dto.getLongitude());
-        ZoneStatus status = ZoneStatus.valueOf(dto.getStatus());
-        Instant createdAt = Instant.parse(dto.getCreatedAt());
+        Set<String> containerIds = entity.getContainers().stream()
+            .map(c -> c.getId())
+            .collect(Collectors.toSet());
         
         return new Zone(
-            dto.getId(),
-            dto.getName(),
+            entity.getId(),
+            entity.getName(),
             centerPoint,
-            dto.getMunicipality(),
+            entity.getMunicipality(),
             status,
-            dto.getContainerIds(),
-            dto.getCriticalThreshold(),
-            dto.getDescription(),
-            createdAt
+            containerIds,
+            entity.getCriticalThreshold(),
+            entity.getDescription(),
+            entity.getCreatedAt()
         );
     }
     
-    private ZoneDTO toDTO(Zone zone) {
-        ZoneDTO dto = new ZoneDTO();
-        dto.setId(zone.getId());
-        dto.setName(zone.getName());
-        dto.setStatus(zone.getStatus().name());
-        dto.setMunicipality(zone.getMunicipality());
-        dto.setDescription(zone.getDescription());
-        dto.setCriticalThreshold(zone.getCriticalThreshold());
-        dto.setLatitude(zone.getCenterPoint().getLatitude());
-        dto.setLongitude(zone.getCenterPoint().getLongitude());
-        dto.setContainerIds(zone.getContainerIds());
-        dto.setCreatedAt(zone.getCreatedAt().toString());
-        dto.setModifiedAt(zone.getModifiedAt().toString());
-        return dto;
+    private ZoneEntity toEntity(Zone zone) {
+        ZoneEntity entity = new ZoneEntity();
+        entity.setId(zone.getId());
+        entity.setName(zone.getName());
+        entity.setStatus(zone.getStatus().name());
+        entity.setMunicipality(zone.getMunicipality());
+        entity.setDescription(zone.getDescription());
+        entity.setCriticalThreshold(zone.getCriticalThreshold());
+        entity.setLatitude(zone.getCenterPoint().getLatitude());
+        entity.setLongitude(zone.getCenterPoint().getLongitude());
+        entity.setCreatedAt(zone.getCreatedAt());
+        entity.setModifiedAt(zone.getModifiedAt());
+        return entity;
     }
 }

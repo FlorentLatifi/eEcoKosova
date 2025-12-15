@@ -1,186 +1,187 @@
 package eco.kosova.infrastructure.persistence;
 
-import com.google.gson.reflect.TypeToken;
 import eco.kosova.domain.models.Kontenier;
 import eco.kosova.domain.models.valueobjects.*;
 import eco.kosova.domain.repositories.KontenierRepository;
-import eco.kosova.infrastructure.persistence.dto.ContainerDTO;
+import eco.kosova.infrastructure.persistence.jpa.ContainerEntity;
+import eco.kosova.infrastructure.persistence.jpa.ContainerEntityRepository;
+import eco.kosova.infrastructure.persistence.jpa.ZoneEntity;
+import eco.kosova.infrastructure.persistence.jpa.ZoneEntityRepository;
 import org.springframework.stereotype.Repository;
 
-import java.lang.reflect.Type;
 import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
 public class KontenierRepositoryImpl implements KontenierRepository {
     
-    private static final String CONTAINERS_FILE = "containers.json";
-    private final JsonDataManager dataManager;
-    private final Map<String, Kontenier> cache;
+    private final ContainerEntityRepository containerEntityRepository;
+    private final ZoneEntityRepository zoneEntityRepository;
     
-    public KontenierRepositoryImpl(JsonDataManager dataManager) {
-        this.dataManager = dataManager;
-        this.cache = new ConcurrentHashMap<>();
-        loadFromFile();
+    public KontenierRepositoryImpl(ContainerEntityRepository containerEntityRepository,
+                                   ZoneEntityRepository zoneEntityRepository) {
+        this.containerEntityRepository = containerEntityRepository;
+        this.zoneEntityRepository = zoneEntityRepository;
     }
     
     @Override
     public Optional<Kontenier> findById(String id) {
-        return Optional.ofNullable(cache.get(id));
+        return containerEntityRepository.findById(id).map(this::toDomain);
     }
     
     @Override
     public List<Kontenier> findAll() {
-        return new ArrayList<>(cache.values());
+        return containerEntityRepository.findAll().stream()
+            .map(this::toDomain)
+            .collect(Collectors.toList());
     }
     
     @Override
     public List<Kontenier> findByZoneId(String zoneId) {
-        return cache.values().stream()
-            .filter(k -> k.getZoneId().equals(zoneId))
+        return containerEntityRepository.findByZone_Id(zoneId).stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Kontenier> findByStatus(ContainerStatus status) {
-        return cache.values().stream()
-            .filter(k -> k.getStatus() == status)
+        return containerEntityRepository.findByStatus(status.name()).stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Kontenier> findByType(ContainerType type) {
-        return cache.values().stream()
-            .filter(k -> k.getType() == type)
+        return containerEntityRepository.findByType(type.name()).stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Kontenier> findCriticalContainers() {
-        return cache.values().stream()
-            .filter(k -> k.getFillLevel().isCritical())
+        return containerEntityRepository.findCriticalContainers().stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Kontenier> findContainersNeedingCollection() {
-        return cache.values().stream()
-            .filter(Kontenier::isReadyForCollection)
+        return containerEntityRepository.findContainersNeedingCollection().stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Kontenier> findOperationalByZoneId(String zoneId) {
-        return cache.values().stream()
-            .filter(k -> k.getZoneId().equals(zoneId) && k.isOperational())
+        return containerEntityRepository.findOperationalByZoneId(zoneId).stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public List<Kontenier> findNonOperational() {
-        return cache.values().stream()
-            .filter(k -> !k.isOperational())
+        return containerEntityRepository.findNonOperational().stream()
+            .map(this::toDomain)
             .collect(Collectors.toList());
     }
     
     @Override
     public Kontenier save(Kontenier kontenier) {
-        cache.put(kontenier.getId(), kontenier);
-        saveToFile();
+        ContainerEntity entity = toEntity(kontenier);
+        containerEntityRepository.save(entity);
         return kontenier;
     }
     
     @Override
     public List<Kontenier> saveAll(List<Kontenier> kontejner) {
-        kontejner.forEach(k -> cache.put(k.getId(), k));
-        saveToFile();
+        List<ContainerEntity> entities = kontejner.stream()
+            .map(this::toEntity)
+            .collect(Collectors.toList());
+        containerEntityRepository.saveAll(entities);
         return kontejner;
     }
     
     @Override
     public boolean deleteById(String id) {
-        boolean existed = cache.remove(id) != null;
+        boolean existed = containerEntityRepository.existsById(id);
         if (existed) {
-            saveToFile();
+            containerEntityRepository.deleteById(id);
         }
         return existed;
     }
     
     @Override
     public boolean existsById(String id) {
-        return cache.containsKey(id);
+        return containerEntityRepository.existsById(id);
     }
     
     @Override
     public long count() {
-        return cache.size();
+        return containerEntityRepository.count();
     }
     
     @Override
     public long countByZoneId(String zoneId) {
-        return cache.values().stream()
-            .filter(k -> k.getZoneId().equals(zoneId))
-            .count();
+        return containerEntityRepository.countByZone_Id(zoneId);
     }
     
     // ========== PRIVATE HELPER METHODS ==========
     
-    private void loadFromFile() {
-        Type listType = new TypeToken<List<ContainerDTO>>(){}.getType();
-        List<ContainerDTO> dtos = dataManager.readList(CONTAINERS_FILE, listType);
+    private Kontenier toDomain(ContainerEntity entity) {
+        Coordinates coords = new Coordinates(entity.getLatitude(), entity.getLongitude());
+        Address address = new Address(
+            entity.getStreet(),
+            entity.getCity(),
+            entity.getMunicipality(),
+            entity.getPostalCode()
+        );
+        FillLevel fillLevel = new FillLevel(entity.getFillLevel());
+        ContainerType type = ContainerType.valueOf(entity.getType());
+        ContainerStatus status = ContainerStatus.valueOf(entity.getStatus());
         
-        dtos.forEach(dto -> {
-            Kontenier kontenier = fromDTO(dto);
-            cache.put(kontenier.getId(), kontenier);
-        });
+        String zoneId = entity.getZone() != null ? entity.getZone().getId() : null;
+        
+        return new Kontenier(
+            entity.getId(),
+            zoneId,
+            type,
+            entity.getCapacity(),
+            coords,
+            address,
+            fillLevel,
+            status,
+            entity.isOperational(),
+            entity.getLastEmptied(),
+            entity.getCreatedAt()
+        );
     }
     
-    private void saveToFile() {
-        List<ContainerDTO> dtos = cache.values().stream()
-            .map(this::toDTO)
-            .collect(Collectors.toList());
+    private ContainerEntity toEntity(Kontenier k) {
+        ContainerEntity entity = new ContainerEntity();
+        entity.setId(k.getId());
         
-        dataManager.writeList(CONTAINERS_FILE, dtos);
-    }
-    
-    private Kontenier fromDTO(ContainerDTO dto) {
-        Coordinates coords = new Coordinates(dto.getLatitude(), dto.getLongitude());
-        Address address = new Address(dto.getStreet(), dto.getCity(), 
-            dto.getMunicipality(), dto.getPostalCode());
-        FillLevel fillLevel = new FillLevel(dto.getFillLevel());
-        ContainerType type = ContainerType.valueOf(dto.getType());
-        ContainerStatus status = ContainerStatus.valueOf(dto.getStatus());
+        ZoneEntity zone = zoneEntityRepository.findById(k.getZoneId())
+            .orElseThrow(() -> new IllegalStateException("Zone not found: " + k.getZoneId()));
         
-        Instant lastEmptied = dto.getLastEmptied() != null ? 
-            Instant.parse(dto.getLastEmptied()) : null;
-        Instant createdAt = Instant.parse(dto.getCreatedAt());
-        
-        return new Kontenier(dto.getId(), dto.getZoneId(), type, dto.getCapacity(),
-            coords, address, fillLevel, status, dto.isOperational(), lastEmptied, createdAt);
-    }
-    
-    private ContainerDTO toDTO(Kontenier k) {
-        ContainerDTO dto = new ContainerDTO();
-        dto.setId(k.getId());
-        dto.setZoneId(k.getZoneId());
-        dto.setType(k.getType().name());
-        dto.setFillLevel(k.getFillLevel().getValue());
-        dto.setStatus(k.getStatus().name());
-        dto.setCapacity(k.getCapacity());
-        dto.setOperational(k.isOperational());
-        dto.setLatitude(k.getLocation().getLatitude());
-        dto.setLongitude(k.getLocation().getLongitude());
-        dto.setStreet(k.getAddress().getStreet());
-        dto.setCity(k.getAddress().getCity());
-        dto.setMunicipality(k.getAddress().getMunicipality());
-        dto.setPostalCode(k.getAddress().getPostalCode());
-        dto.setLastEmptied(k.getLastEmptied() != null ? k.getLastEmptied().toString() : null);
-        dto.setLastUpdated(k.getLastUpdated().toString());
-        dto.setCreatedAt(k.getCreatedAt().toString());
-        dto.setModifiedAt(k.getModifiedAt().toString());
-        return dto;
+        entity.setZone(zone);
+        entity.setType(k.getType().name());
+        entity.setFillLevel(k.getFillLevel().getValue());
+        entity.setStatus(k.getStatus().name());
+        entity.setCapacity(k.getCapacity());
+        entity.setOperational(k.isOperational());
+        entity.setLatitude(k.getLocation().getLatitude());
+        entity.setLongitude(k.getLocation().getLongitude());
+        entity.setStreet(k.getAddress().getStreet());
+        entity.setCity(k.getAddress().getCity());
+        entity.setMunicipality(k.getAddress().getMunicipality());
+        entity.setPostalCode(k.getAddress().getPostalCode());
+        entity.setLastEmptied(k.getLastEmptied());
+        entity.setLastUpdated(k.getLastUpdated());
+        entity.setCreatedAt(k.getCreatedAt());
+        entity.setModifiedAt(k.getModifiedAt());
+        return entity;
     }
 }
 

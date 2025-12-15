@@ -5,7 +5,6 @@ import eco.kosova.domain.repositories.KontenierRepository;
 import eco.kosova.domain.repositories.ZoneRepository;
 import eco.kosova.domain.services.RouteOptimizationService;
 import eco.kosova.domain.services.WasteMonitoringService;
-import eco.kosova.infrastructure.persistence.JsonDataManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -36,14 +35,6 @@ public class AppConfig {
                         .maxAge(3600);
             }
         };
-    }
-    
-    /**
-     * JsonDataManager bean
-     */
-    @Bean
-    public JsonDataManager jsonDataManager() {
-        return new JsonDataManager();
     }
     
     /**

@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ecokosova-mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      # Ruajtja e perhershme e fajllave të databazës në host
+      - ./mssql-data:/var/opt/mssql
+    networks:
+      - ecokosova-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -11,6 +27,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - ECOKOSOVA_DATA_DIRECTORY=/app/data
+      - spring.datasource.url=jdbc:sqlserver://mssql:1433;databaseName=EcoKosova;encrypt=false;trustServerCertificate=true
+      - spring.datasource.username=sa
+      - spring.datasource.password=YourStrong!Passw0rd
     volumes:
       - ./backend/src/main/resources/data:/app/data
     healthcheck:

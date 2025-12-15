@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 /**
  * Initializer që ekzekutohet kur aplikacioni starton.
- * Ngarkon të dhënat nga JSON files.
+ * Verifikon që të dhënat bazë ekzistojnë në databazë.
  */
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -27,9 +27,8 @@ public class DataInitializer implements CommandLineRunner {
     
     @Override
     public void run(String... args) throws Exception {
-        logger.info("📊 Initializing data from JSON files...");
+        logger.info("📊 Initializing data from database (MSSQL)...");
         
-        // Load repositories (që do të ngarkojnë data nga JSON)
         long containerCount = kontenierRepository.count();
         long zoneCount = zoneRepository.count();
         
