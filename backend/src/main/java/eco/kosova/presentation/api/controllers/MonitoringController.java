@@ -47,15 +47,24 @@ public class MonitoringController {
      * GET /api/monitoring/containers - Merr të gjitha kontejnerët
      */
     @GetMapping("/containers")
-    public ResponseEntity<List<ContainerResponseDTO>> getAllContainers() {
+    public ResponseEntity<List<ContainerResponseDTO>> getAllContainers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
         List<Kontenier> containers = getAllHandler.handle(
             GetAllContainersQuery.getInstance()
         );
-        
-        List<ContainerResponseDTO> dtos = containers.stream()
+
+        int fromIndex = Math.max(page * size, 0);
+        int toIndex = Math.min(fromIndex + size, containers.size());
+        if (fromIndex > toIndex) {
+            fromIndex = toIndex;
+        }
+
+        List<ContainerResponseDTO> dtos = containers.subList(fromIndex, toIndex).stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(dtos);
     }
     
