@@ -23,7 +23,6 @@ public class SecurityConfig {
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
                 .frameOptions(frame -> frame.deny())
-                .xssProtection(xss -> xss.block(true))
                 .httpStrictTransportSecurity(hsts -> hsts
                     .includeSubDomains(true)
                     .preload(true)
