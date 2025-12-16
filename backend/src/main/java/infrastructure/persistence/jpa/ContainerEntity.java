@@ -60,7 +60,7 @@ public class ContainerEntity {
     @Column(nullable = false)
     private Instant modifiedAt;
 
-    protected ContainerEntity() {
+    public ContainerEntity() {
     }
 
     // Getters and setters

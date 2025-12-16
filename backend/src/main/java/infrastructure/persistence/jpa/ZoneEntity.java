@@ -44,7 +44,7 @@ public class ZoneEntity {
     @Column(nullable = false)
     private Instant modifiedAt;
 
-    protected ZoneEntity() {
+    public ZoneEntity() {
     }
 
     // Getters and setters
