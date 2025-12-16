@@ -12,7 +12,11 @@ import eco.kosova.application.queries.GetContainersByZoneQuery;
 import eco.kosova.application.queries.GetCriticalContainersQuery;
 import eco.kosova.domain.models.Kontenier;
 import eco.kosova.presentation.dtos.ContainerResponseDTO;
+import eco.kosova.presentation.dtos.PagedResponse;
 import eco.kosova.presentation.dtos.UpdateFillLevelRequest;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +31,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/monitoring")
 @CrossOrigin(origins = "*")
 public class MonitoringController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(MonitoringController.class);
     
     @Autowired
     private UpdateContainerFillLevelHandler updateHandler;
@@ -47,14 +53,17 @@ public class MonitoringController {
      * GET /api/monitoring/containers - Merr të gjitha kontejnerët
      */
     @GetMapping("/containers")
-    public ResponseEntity<List<ContainerResponseDTO>> getAllContainers(
+    public ResponseEntity<PagedResponse<ContainerResponseDTO>> getAllContainers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size
     ) {
+        logger.info("GET /api/monitoring/containers - page={}, size={}", page, size);
+        
         List<Kontenier> containers = getAllHandler.handle(
             GetAllContainersQuery.getInstance()
         );
 
+        long total = containers.size();
         int fromIndex = Math.max(page * size, 0);
         int toIndex = Math.min(fromIndex + size, containers.size());
         if (fromIndex > toIndex) {
@@ -65,7 +74,10 @@ public class MonitoringController {
             .map(this::toDTO)
             .collect(Collectors.toList());
 
-        return ResponseEntity.ok(dtos);
+        PagedResponse<ContainerResponseDTO> response = PagedResponse.of(dtos, page, size, total);
+        logger.debug("Returning {} containers (page {}, total {})", dtos.size(), page, total);
+        
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -73,6 +85,8 @@ public class MonitoringController {
      */
     @GetMapping("/containers/critical")
     public ResponseEntity<List<ContainerResponseDTO>> getCriticalContainers() {
+        logger.info("GET /api/monitoring/containers/critical");
+        
         List<Kontenier> containers = getCriticalHandler.handle(
             GetCriticalContainersQuery.getInstance()
         );
@@ -81,6 +95,7 @@ public class MonitoringController {
             .map(this::toDTO)
             .collect(Collectors.toList());
         
+        logger.debug("Found {} critical containers", dtos.size());
         return ResponseEntity.ok(dtos);
     }
     
@@ -90,23 +105,24 @@ public class MonitoringController {
     @PutMapping("/containers/{containerId}/fill-level")
     public ResponseEntity<String> updateFillLevel(
             @PathVariable String containerId,
-            @RequestBody UpdateFillLevelRequest request
+            @RequestBody @Valid UpdateFillLevelRequest request
     ) {
+        logger.info("PUT /api/monitoring/containers/{}/fill-level - level={}", containerId, request.getFillLevel());
+        
         try {
             UpdateContainerFillLevelCommand command = 
                 new UpdateContainerFillLevelCommand(containerId, request.getFillLevel());
             
             updateHandler.handle(command);
             
+            logger.info("Successfully updated fill level for container {} to {}%", containerId, request.getFillLevel());
             return ResponseEntity.ok(
                 String.format("Niveli i mbushjes u përditësua: %d%%", request.getFillLevel())
             );
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Gabim: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                .body("Gabim i brendshëm: " + e.getMessage());
+            logger.error("Error updating fill level for container {}: {}", containerId, e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     
@@ -117,14 +133,17 @@ public class MonitoringController {
     public ResponseEntity<ContainerResponseDTO> getContainerById(
             @PathVariable String containerId
     ) {
-        try {
-            return getByIdHandler.handle(GetContainerByIdQuery.of(containerId))
-                .map(this::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        logger.info("GET /api/monitoring/containers/{}", containerId);
+        
+        return getByIdHandler.handle(GetContainerByIdQuery.of(containerId))
+            .map(container -> {
+                logger.debug("Found container: {}", containerId);
+                return ResponseEntity.ok(toDTO(container));
+            })
+            .orElseGet(() -> {
+                logger.warn("Container not found: {}", containerId);
+                return ResponseEntity.notFound().build();
+            });
     }
     
     /**
@@ -134,19 +153,18 @@ public class MonitoringController {
     public ResponseEntity<List<ContainerResponseDTO>> getContainersByZone(
             @PathVariable String zoneId
     ) {
-        try {
-            List<Kontenier> containers = getByZoneHandler.handle(
-                GetContainersByZoneQuery.of(zoneId)
-            );
-            
-            List<ContainerResponseDTO> dtos = containers.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-            
-            return ResponseEntity.ok(dtos);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        logger.info("GET /api/monitoring/containers/zone/{}", zoneId);
+        
+        List<Kontenier> containers = getByZoneHandler.handle(
+            GetContainersByZoneQuery.of(zoneId)
+        );
+        
+        List<ContainerResponseDTO> dtos = containers.stream()
+            .map(this::toDTO)
+            .collect(Collectors.toList());
+        
+        logger.debug("Found {} containers for zone {}", dtos.size(), zoneId);
+        return ResponseEntity.ok(dtos);
     }
     
     // ========== HELPER METHODS ==========

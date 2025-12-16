@@ -17,13 +17,16 @@ import eco.kosova.application.queries.GetContainersByZoneQuery;
 import eco.kosova.domain.models.Kontenier;
 import eco.kosova.presentation.dtos.ContainerResponseDTO;
 import eco.kosova.presentation.dtos.CreateContainerRequest;
+import eco.kosova.presentation.dtos.UpdateContainerRequest;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +36,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/containers")
 @CrossOrigin(origins = "*")
 public class ContainerManagementController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ContainerManagementController.class);
     
     @Autowired
     private CreateContainerHandler createHandler;
@@ -60,9 +65,10 @@ public class ContainerManagementController {
      */
     @PostMapping
     public ResponseEntity<ContainerResponseDTO> createContainer(
-            @org.springframework.web.bind.annotation.RequestBody
-            @jakarta.validation.Valid CreateContainerRequest request
+            @RequestBody @Valid CreateContainerRequest request
     ) {
+        logger.info("POST /api/containers - Creating container with id: {}", request.getId());
+        
         CreateContainerCommand command = new CreateContainerCommand(
             request.getId(),
             request.getZoneId(),
@@ -79,6 +85,8 @@ public class ContainerManagementController {
 
         Kontenier container = createHandler.handle(command);
         ContainerResponseDTO dto = toDTO(container);
+        
+        logger.info("Successfully created container: {}", container.getId());
         return ResponseEntity.ok(dto);
     }
     
@@ -88,32 +96,34 @@ public class ContainerManagementController {
     @PutMapping("/{id}")
     public ResponseEntity<String> updateContainer(
             @PathVariable String id,
-            @RequestBody Map<String, Object> request
+            @RequestBody @Valid UpdateContainerRequest request
     ) {
+        logger.info("PUT /api/containers/{}", id);
+        
         try {
             UpdateContainerCommand command = new UpdateContainerCommand(
                 id,
-                (String) request.get("zoneId"),
-                (String) request.get("type"),
-                request.get("capacity") != null ? ((Number) request.get("capacity")).intValue() : null,
-                request.get("latitude") != null ? ((Number) request.get("latitude")).doubleValue() : null,
-                request.get("longitude") != null ? ((Number) request.get("longitude")).doubleValue() : null,
-                (String) request.get("street"),
-                (String) request.get("city"),
-                (String) request.get("municipality"),
-                (String) request.get("postalCode"),
-                request.get("operational") != null ? (Boolean) request.get("operational") : null,
-                request.get("fillLevel") != null ? ((Number) request.get("fillLevel")).intValue() : null
+                request.getZoneId(),
+                request.getType(),
+                request.getCapacity(),
+                request.getLatitude(),
+                request.getLongitude(),
+                request.getStreet(),
+                request.getCity(),
+                request.getMunicipality(),
+                request.getPostalCode(),
+                request.getOperational(),
+                request.getFillLevel()
             );
             
             updateHandler.handle(command);
             
+            logger.info("Successfully updated container: {}", id);
             return ResponseEntity.ok("Kontejneri u përditësua me sukses");
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Gabim: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Gabim i brendshëm: " + e.getMessage());
+            logger.error("Error updating container {}: {}", id, e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     
@@ -122,16 +132,18 @@ public class ContainerManagementController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteContainer(@PathVariable String id) {
+        logger.info("DELETE /api/containers/{}", id);
+        
         try {
             DeleteContainerCommand command = new DeleteContainerCommand(id);
             deleteHandler.handle(command);
             
+            logger.info("Successfully deleted container: {}", id);
             return ResponseEntity.ok("Kontejneri u fshi me sukses");
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Gabim: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Gabim i brendshëm: " + e.getMessage());
+            logger.error("Error deleting container {}: {}", id, e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     
@@ -140,14 +152,17 @@ public class ContainerManagementController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ContainerResponseDTO> getContainerById(@PathVariable String id) {
-        try {
-            return getByIdHandler.handle(GetContainerByIdQuery.of(id))
-                .map(this::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        logger.info("GET /api/containers/{}", id);
+        
+        return getByIdHandler.handle(GetContainerByIdQuery.of(id))
+            .map(container -> {
+                logger.debug("Found container: {}", id);
+                return ResponseEntity.ok(toDTO(container));
+            })
+            .orElseGet(() -> {
+                logger.warn("Container not found: {}", id);
+                return ResponseEntity.notFound().build();
+            });
     }
     
     /**
@@ -157,19 +172,18 @@ public class ContainerManagementController {
     public ResponseEntity<List<ContainerResponseDTO>> getContainersByZone(
             @PathVariable String zoneId
     ) {
-        try {
-            List<Kontenier> containers = getByZoneHandler.handle(
-                GetContainersByZoneQuery.of(zoneId)
-            );
-            
-            List<ContainerResponseDTO> dtos = containers.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-            
-            return ResponseEntity.ok(dtos);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        logger.info("GET /api/containers/zone/{}", zoneId);
+        
+        List<Kontenier> containers = getByZoneHandler.handle(
+            GetContainersByZoneQuery.of(zoneId)
+        );
+        
+        List<ContainerResponseDTO> dtos = containers.stream()
+            .map(this::toDTO)
+            .collect(Collectors.toList());
+        
+        logger.debug("Found {} containers for zone {}", dtos.size(), zoneId);
+        return ResponseEntity.ok(dtos);
     }
     
     /**
@@ -178,8 +192,10 @@ public class ContainerManagementController {
     @PostMapping("/{id}/schedule-collection")
     public ResponseEntity<String> scheduleCollection(
             @PathVariable String id,
-            @RequestBody Map<String, Object> request
+            @RequestBody java.util.Map<String, Object> request
     ) {
+        logger.info("POST /api/containers/{}/schedule-collection", id);
+        
         try {
             String scheduledTimeStr = (String) request.get("scheduledTime");
             Instant scheduledTime = scheduledTimeStr != null 
@@ -192,11 +208,11 @@ public class ContainerManagementController {
             
             scheduleCollectionHandler.handle(command);
             
+            logger.info("Successfully scheduled collection for container {} at {}", id, scheduledTime);
             return ResponseEntity.ok("Mbledhja u caktua me sukses për " + scheduledTime);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Gabim: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Gabim i brendshëm: " + e.getMessage());
+            logger.error("Error scheduling collection for container {}: {}", id, e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     
@@ -205,15 +221,17 @@ public class ContainerManagementController {
      */
     @PostMapping("/{id}/empty")
     public ResponseEntity<String> emptyContainer(@PathVariable String id) {
+        logger.info("POST /api/containers/{}/empty", id);
+        
         try {
             EmptyContainerCommand command = new EmptyContainerCommand(id);
             emptyContainerHandler.handle(command);
             
+            logger.info("Successfully emptied container: {}", id);
             return ResponseEntity.ok("Kontejneri u zbraz me sukses");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Gabim: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Gabim i brendshëm: " + e.getMessage());
+            logger.error("Error emptying container {}: {}", id, e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     

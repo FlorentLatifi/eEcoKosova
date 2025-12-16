@@ -3,13 +3,19 @@ package eco.kosova.presentation.api.controllers;
 import eco.kosova.application.handlers.GetZoneStatisticsHandler;
 import eco.kosova.application.queries.GetZoneStatisticsQuery;
 import eco.kosova.domain.services.WasteMonitoringService;
+import eco.kosova.presentation.dtos.CreateZoneRequest;
+import eco.kosova.presentation.dtos.PagedResponse;
+import eco.kosova.presentation.dtos.UpdateZoneRequest;
+import eco.kosova.presentation.dtos.ZoneDTO;
 import eco.kosova.presentation.dtos.ZoneStatisticsDTO;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -19,6 +25,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/zones")
 @CrossOrigin(origins = "*")
 public class ZoneController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ZoneController.class);
     
     @Autowired
     private GetZoneStatisticsHandler statisticsHandler;
@@ -40,6 +48,8 @@ public class ZoneController {
      */
     @GetMapping("/statistics")
     public ResponseEntity<List<ZoneStatisticsDTO>> getZoneStatistics() {
+        logger.info("GET /api/zones/statistics");
+        
         List<WasteMonitoringService.ZoneStatistics> stats = 
             statisticsHandler.handle(GetZoneStatisticsQuery.getInstance());
         
@@ -47,6 +57,7 @@ public class ZoneController {
             .map(this::toDTO)
             .collect(Collectors.toList());
         
+        logger.debug("Returning statistics for {} zones", dtos.size());
         return ResponseEntity.ok(dtos);
     }
     
@@ -54,37 +65,56 @@ public class ZoneController {
      * GET /api/zones - Merr të gjitha zonat
      */
     @GetMapping
-    public ResponseEntity<List<eco.kosova.presentation.dtos.ZoneDTO>> getAllZones() {
+    public ResponseEntity<PagedResponse<ZoneDTO>> getAllZones(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        logger.info("GET /api/zones - page={}, size={}", page, size);
+        
         List<eco.kosova.domain.models.Zone> zones = zoneRepository.findAll();
-        List<eco.kosova.presentation.dtos.ZoneDTO> dtos = zones.stream()
+        long total = zones.size();
+        
+        int fromIndex = Math.max(page * size, 0);
+        int toIndex = Math.min(fromIndex + size, zones.size());
+        if (fromIndex > toIndex) {
+            fromIndex = toIndex;
+        }
+        
+        List<ZoneDTO> dtos = zones.subList(fromIndex, toIndex).stream()
             .map(this::zoneToDTO)
             .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
+        
+        PagedResponse<ZoneDTO> response = PagedResponse.of(dtos, page, size, total);
+        logger.debug("Returning {} zones (page {}, total {})", dtos.size(), page, total);
+        
+        return ResponseEntity.ok(response);
     }
     
     /**
      * POST /api/zones - Krijon një zonë të re
      */
     @PostMapping
-    public ResponseEntity<String> createZone(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<String> createZone(@RequestBody @Valid CreateZoneRequest request) {
+        logger.info("POST /api/zones - Creating zone with id: {}", request.getZoneId());
+        
         try {
             eco.kosova.application.commands.CreateZoneCommand command = 
                 new eco.kosova.application.commands.CreateZoneCommand(
-                    (String) request.get("zoneId"),
-                    (String) request.get("name"),
-                    ((Number) request.getOrDefault("latitude", 42.6629)).doubleValue(),
-                    ((Number) request.getOrDefault("longitude", 21.1655)).doubleValue(),
-                    (String) request.get("municipality"),
-                    (String) request.getOrDefault("description", "")
+                    request.getZoneId(),
+                    request.getName(),
+                    request.getLatitude(),
+                    request.getLongitude(),
+                    request.getMunicipality(),
+                    request.getDescription()
                 );
             
             createZoneHandler.handle(command);
+            logger.info("Successfully created zone: {}", request.getZoneId());
             return ResponseEntity.ok("Zona u krijua me sukses");
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Gabim: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Gabim i brendshëm: " + e.getMessage());
+            logger.error("Error creating zone: {}", e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     
@@ -94,26 +124,28 @@ public class ZoneController {
     @PutMapping("/{id}")
     public ResponseEntity<String> updateZone(
             @PathVariable String id,
-            @RequestBody Map<String, Object> request
+            @RequestBody @Valid UpdateZoneRequest request
     ) {
+        logger.info("PUT /api/zones/{}", id);
+        
         try {
             eco.kosova.application.commands.UpdateZoneCommand command = 
                 new eco.kosova.application.commands.UpdateZoneCommand(
                     id,
-                    (String) request.get("name"),
-                    request.get("latitude") != null ? ((Number) request.get("latitude")).doubleValue() : null,
-                    request.get("longitude") != null ? ((Number) request.get("longitude")).doubleValue() : null,
-                    (String) request.get("municipality"),
-                    (String) request.get("description")
+                    request.getName(),
+                    request.getLatitude(),
+                    request.getLongitude(),
+                    request.getMunicipality(),
+                    request.getDescription()
                 );
             
             updateZoneHandler.handle(command);
+            logger.info("Successfully updated zone: {}", id);
             return ResponseEntity.ok("Zona u përditësua me sukses");
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Gabim: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Gabim i brendshëm: " + e.getMessage());
+            logger.error("Error updating zone {}: {}", id, e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     
@@ -122,16 +154,18 @@ public class ZoneController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteZone(@PathVariable String id) {
+        logger.info("DELETE /api/zones/{}", id);
+        
         try {
             eco.kosova.application.commands.DeleteZoneCommand command = 
                 new eco.kosova.application.commands.DeleteZoneCommand(id);
             deleteZoneHandler.handle(command);
+            logger.info("Successfully deleted zone: {}", id);
             return ResponseEntity.ok("Zona u fshi me sukses");
             
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body("Gabim: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Gabim i brendshëm: " + e.getMessage());
+            logger.error("Error deleting zone {}: {}", id, e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     
@@ -147,8 +181,8 @@ public class ZoneController {
         return dto;
     }
     
-    private eco.kosova.presentation.dtos.ZoneDTO zoneToDTO(eco.kosova.domain.models.Zone zone) {
-        eco.kosova.presentation.dtos.ZoneDTO dto = new eco.kosova.presentation.dtos.ZoneDTO();
+    private ZoneDTO zoneToDTO(eco.kosova.domain.models.Zone zone) {
+        ZoneDTO dto = new ZoneDTO();
         dto.setId(zone.getId());
         dto.setName(zone.getName());
         dto.setStatus(zone.getStatus().getDisplayName());

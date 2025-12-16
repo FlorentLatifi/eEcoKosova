@@ -1,89 +1,133 @@
 package eco.kosova.presentation.api.controllers;
 
 import eco.kosova.domain.models.Qytetari;
+import eco.kosova.domain.repositories.QytetariRepository;
+import eco.kosova.presentation.dtos.CreateQytetariRequest;
+import eco.kosova.presentation.dtos.PagedResponse;
 import eco.kosova.presentation.dtos.QytetariDTO;
+import eco.kosova.presentation.dtos.UpdateQytetariRequest;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * REST Controller për menaxhimin e qytetarëve.
- * Përdor in-memory storage për demonstrim.
  */
 @RestController
 @RequestMapping("/api/qytetaret")
 @CrossOrigin(origins = "*")
 public class QytetariController {
     
-    private final Map<String, Qytetari> qytetaret = new ConcurrentHashMap<>();
+    private static final Logger logger = LoggerFactory.getLogger(QytetariController.class);
     
-    public QytetariController() {
-        initializeDemoData();
-    }
+    @Autowired
+    private QytetariRepository qytetariRepository;
     
     @GetMapping
-    public ResponseEntity<List<QytetariDTO>> getAllQytetaret() {
-        List<QytetariDTO> dtos = qytetaret.values().stream()
+    public ResponseEntity<PagedResponse<QytetariDTO>> getAllQytetaret(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        logger.info("GET /api/qytetaret - page={}, size={}", page, size);
+        
+        List<Qytetari> allQytetaret = qytetariRepository.findAll();
+        long total = allQytetaret.size();
+        
+        int fromIndex = Math.max(page * size, 0);
+        int toIndex = Math.min(fromIndex + size, allQytetaret.size());
+        if (fromIndex > toIndex) {
+            fromIndex = toIndex;
+        }
+        
+        List<QytetariDTO> dtos = allQytetaret.subList(fromIndex, toIndex).stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
+        
+        PagedResponse<QytetariDTO> response = PagedResponse.of(dtos, page, size, total);
+        logger.debug("Returning {} qytetaret (page {}, total {})", dtos.size(), page, total);
+        
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")
     public ResponseEntity<QytetariDTO> getQytetariById(@PathVariable String id) {
-        Qytetari qytetari = qytetaret.get(id);
-        if (qytetari == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(toDTO(qytetari));
+        logger.info("GET /api/qytetaret/{}", id);
+        
+        return qytetariRepository.findById(id)
+            .map(qytetari -> {
+                logger.debug("Found qytetari: {}", id);
+                return ResponseEntity.ok(toDTO(qytetari));
+            })
+            .orElseGet(() -> {
+                logger.warn("Qytetari not found: {}", id);
+                return ResponseEntity.notFound().build();
+            });
     }
     
     @PostMapping
-    public ResponseEntity<QytetariDTO> createQytetari(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<QytetariDTO> createQytetari(@RequestBody @Valid CreateQytetariRequest request) {
+        logger.info("POST /api/qytetaret - Creating qytetari with id: {}", request.getId());
+        
         try {
-            String id = (String) request.get("id");
-            String name = (String) request.get("name");
-            String address = (String) request.get("address");
+            Qytetari qytetari = new Qytetari(
+                request.getId(),
+                request.getName(),
+                request.getAddress()
+            );
             
-            Qytetari qytetari = new Qytetari(id, name, address);
-            qytetaret.put(id, qytetari);
+            qytetari = qytetariRepository.save(qytetari);
+            logger.info("Successfully created qytetari: {}", qytetari.getId());
             
             return ResponseEntity.ok(toDTO(qytetari));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error creating qytetari: {}", e.getMessage());
+            throw e; // Will be handled by GlobalExceptionHandler
         }
     }
     
     @PutMapping("/{id}")
     public ResponseEntity<QytetariDTO> updateQytetari(
             @PathVariable String id,
-            @RequestBody Map<String, Object> request
+            @RequestBody @Valid UpdateQytetariRequest request
     ) {
-        Qytetari qytetari = qytetaret.get(id);
-        if (qytetari == null) {
-            return ResponseEntity.notFound().build();
-        }
+        logger.info("PUT /api/qytetaret/{}", id);
+        
+        Qytetari qytetari = qytetariRepository.findById(id)
+            .orElseThrow(() -> {
+                logger.warn("Qytetari not found for update: {}", id);
+                return new IllegalArgumentException("Qytetari not found: " + id);
+            });
         
         try {
-            String name = (String) request.get("name");
-            String address = (String) request.get("address");
-            qytetari.updateInfo(name, address);
+            qytetari.updateInfo(request.getName(), request.getAddress());
+            qytetari = qytetariRepository.save(qytetari);
+            logger.info("Successfully updated qytetari: {}", id);
             
             return ResponseEntity.ok(toDTO(qytetari));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException e) {
+            logger.error("Error updating qytetari {}: {}", id, e.getMessage());
+            throw e;
         }
     }
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteQytetari(@PathVariable String id) {
-        if (qytetaret.remove(id) != null) {
+        logger.info("DELETE /api/qytetaret/{}", id);
+        
+        boolean deleted = qytetariRepository.deleteById(id);
+        if (deleted) {
+            logger.info("Successfully deleted qytetari: {}", id);
             return ResponseEntity.noContent().build();
+        } else {
+            logger.warn("Qytetari not found for deletion: {}", id);
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
     }
     
     private QytetariDTO toDTO(Qytetari q) {
@@ -95,12 +139,4 @@ public class QytetariController {
         dto.setLastUpdated(q.getLastUpdated());
         return dto;
     }
-    
-    private void initializeDemoData() {
-        Qytetari q1 = new Qytetari("QYT-001", "Agron Berisha", "Rruga e Dardanisë, Prishtinë");
-        Qytetari q2 = new Qytetari("QYT-002", "Blerta Krasniqi", "Rruga e Pejës, Prishtinë");
-        qytetaret.put(q1.getId(), q1);
-        qytetaret.put(q2.getId(), q2);
-    }
 }
-
