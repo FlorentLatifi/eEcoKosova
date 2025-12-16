@@ -17,11 +17,11 @@ const api = axios.create({
 // Request Interceptor - për të shtuar auth tokens, logging, etj.
 api.interceptors.request.use(
   (config) => {
-    // Mund të shtosh auth token këtu
-    // const token = localStorage.getItem('auth_token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // Shto auth token nëse ekziston
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -39,30 +39,24 @@ api.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       const status = error.response.status;
-      const message = (error.response.data as any)?.message || error.message;
+      const data = error.response.data as any;
+      const message = data?.message || error.message;
       
-      switch (status) {
-        case 400:
-          console.error('Bad Request:', message);
-          break;
-        case 401:
-          console.error('Unauthorized:', message);
-          // Mund të redirect në login page
-          break;
-        case 403:
-          console.error('Forbidden:', message);
-          break;
-        case 404:
-          console.error('Not Found:', message);
-          break;
-        case 500:
-          console.error('Server Error:', message);
-          break;
-        default:
-          console.error(`Error ${status}:`, message);
+      // Handle 401 - Unauthorized (token expired or invalid)
+      if (status === 401) {
+        // Clear auth token dhe redirect në login
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        // Redirect në login page nëse jemi në browser
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
       }
+      
+      // Log error për debugging
+      console.error(`API Error ${status}:`, message, data);
     } else if (error.request) {
-      // Request was made but no response received
+      // Request was made but no response received (network error)
       console.error('Network Error: No response from server');
     } else {
       // Something else happened
@@ -176,15 +170,28 @@ const handleApiError = (error: unknown, context: string): never => {
   throw new ApiError(`Unexpected error in ${context}`);
 };
 
+// Pagination types
+export interface PagedResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
 // API Functions
-export const getAllContainers = async (): Promise<Container[]> => {
+export const getAllContainers = async (page: number = 0, size: number = 50): Promise<PagedResponse<Container>> => {
   try {
-    const response = await api.get<Container[]>('/monitoring/containers');
+    const response = await api.get<PagedResponse<Container>>('/monitoring/containers', {
+      params: { page, size }
+    });
     return response.data;
   } catch (error) {
     handleApiError(error, 'getAllContainers');
     // handleApiError always throws, so this is unreachable
-    return [] as never;
+    return {} as never;
   }
 };
 
