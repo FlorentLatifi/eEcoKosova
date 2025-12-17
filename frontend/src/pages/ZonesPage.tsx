@@ -98,6 +98,34 @@ const ZonesPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Zona Kritike</p>
+                <p className="text-3xl font-bold text-red-600 mt-2">
+                  {zones.filter((z) => z.status === "Kritike").length}
+                </p>
+              </div>
+              <div className="bg-red-100 rounded-full p-4">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Kontejnerë</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {zones.reduce((sum, z) => sum + z.totalContainers, 0)}
+                </p>
+              </div>
+              <div className="bg-green-100 rounded-full p-4">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-3 self-end">
@@ -115,35 +143,6 @@ const ZonesPage: React.FC = () => {
             <Map className="w-5 h-5" />
             <span>Eksporto CSV</span>
           </button>
-        </div>
-      </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Zona Kritike</p>
-              <p className="text-3xl font-bold text-red-600 mt-2">
-                {zones.filter((z) => z.status === "Kritike").length}
-              </p>
-            </div>
-            <div className="bg-red-100 rounded-full p-4">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Kontejnerë</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {zones.reduce((sum, z) => sum + z.totalContainers, 0)}
-              </p>
-            </div>
-            <div className="bg-green-100 rounded-full p-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </div>
         </div>
       </div>
 
@@ -265,9 +264,9 @@ const ZonesPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold">
-                    {selectedZone.zoneName}
+                    {selectedZone?.zoneName}
                   </h2>
-                  <p className="text-blue-100 mt-1">{selectedZone.zoneId}</p>
+                  <p className="text-blue-100 mt-1">{selectedZone?.zoneId}</p>
                 </div>
                 <button
                   onClick={() => setSelectedZone(null)}
@@ -284,10 +283,10 @@ const ZonesPage: React.FC = () => {
               <div className="flex items-center justify-center">
                 <span
                   className={`px-4 py-2 text-sm font-semibold rounded-full border ${getStatusColor(
-                    selectedZone.status
+                    selectedZone?.status || ""
                   )}`}
                 >
-                  {selectedZone.status}
+                  {selectedZone?.status}
                 </span>
               </div>
 
@@ -303,7 +302,7 @@ const ZonesPage: React.FC = () => {
                         Total Kontejnerë
                       </p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {selectedZone.totalContainers}
+                        {selectedZone?.totalContainers}
                       </p>
                     </div>
                   </div>
@@ -319,7 +318,7 @@ const ZonesPage: React.FC = () => {
                         Kritikë
                       </p>
                       <p className="text-2xl font-bold text-red-600">
-                        {selectedZone.criticalContainers}
+                        {selectedZone?.criticalContainers}
                       </p>
                     </div>
                   </div>
@@ -335,7 +334,7 @@ const ZonesPage: React.FC = () => {
                         Operativë
                       </p>
                       <p className="text-2xl font-bold text-green-600">
-                        {selectedZone.operationalContainers}
+                        {selectedZone?.operationalContainers}
                       </p>
                     </div>
                   </div>
@@ -351,7 +350,7 @@ const ZonesPage: React.FC = () => {
                         Mbushje Mesatare
                       </p>
                       <p className="text-2xl font-bold text-blue-600">
-                        {Math.round(selectedZone.averageFillLevel)}%
+                        {Math.round(selectedZone?.averageFillLevel || 0)}%
                       </p>
                     </div>
                   </div>
@@ -367,19 +366,19 @@ const ZonesPage: React.FC = () => {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Progresi</span>
                     <span className="font-semibold text-gray-900">
-                      {Math.round(selectedZone.averageFillLevel)}%
+                      {Math.round(selectedZone?.averageFillLevel || 0)}%
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-4">
                     <div
                       className={`h-4 rounded-full transition-all ${
-                        selectedZone.averageFillLevel >= 90
+                        (selectedZone?.averageFillLevel || 0) >= 90
                           ? "bg-red-500"
-                          : selectedZone.averageFillLevel >= 70
+                          : (selectedZone?.averageFillLevel || 0) >= 70
                           ? "bg-amber-500"
                           : "bg-green-500"
                       }`}
-                      style={{ width: `${selectedZone.averageFillLevel}%` }}
+                      style={{ width: `${selectedZone?.averageFillLevel || 0}%` }}
                     />
                   </div>
                   <div className="flex justify-between text-xs text-gray-500">
@@ -401,8 +400,8 @@ const ZonesPage: React.FC = () => {
                       Informacion
                     </h4>
                     <p className="text-sm text-blue-800">
-                      Kjo zonë ka {selectedZone.totalContainers} kontejnerë,
-                      prej të cilëve {selectedZone.criticalContainers} janë në
+                      Kjo zonë ka {selectedZone?.totalContainers} kontejnerë,
+                      prej të cilëve {selectedZone?.criticalContainers} janë në
                       gjendje kritike dhe kërkojnë mbledhje të menjëhershme.
                     </p>
                   </div>
@@ -414,7 +413,7 @@ const ZonesPage: React.FC = () => {
                 <button
                   onClick={() => {
                     const fullZone =
-                      allZones.find((z) => z.id === selectedZone.zoneId) || null;
+                      allZones.find((z) => z.id === selectedZone?.zoneId) || null;
                     setEditingZone(fullZone);
                   }}
                   className="flex-1 bg-eco-blue text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
@@ -433,6 +432,7 @@ const ZonesPage: React.FC = () => {
         </div>
       )}
 
+      
       <CreateZoneModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -450,7 +450,7 @@ const ZonesPage: React.FC = () => {
         onClose={() => setDeletingZone(null)}
         onDeleted={fetchZones}
       />
-    </div>
+    </div> 
   );
 };
 
