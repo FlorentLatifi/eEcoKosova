@@ -48,7 +48,7 @@ export const useContainers = (refreshInterval?: number): UseContainersReturn => 
     try {
       setLoading(true);
       const data = await getAllContainers();
-      setContainers(data);
+      setContainers(data.content);
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof ApiError 
