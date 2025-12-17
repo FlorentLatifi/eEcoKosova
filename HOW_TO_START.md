@@ -90,6 +90,44 @@ npm run dev
 
 ## ⚠️ Nëse ka Probleme
 
+### Backend nuk starton - SQL Server Connection Error:
+
+Nëse shihni gabimin: `The TCP/IP connection to the host localhost, port 1433 has failed`
+
+**Zgjidhje 1: Përdor Development Profile (Recomanduar)**
+
+Përdorni H2 in-memory database që nuk kërkon SQL Server:
+
+```powershell
+cd eEcoKosova\backend
+mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+**Ose përdorni environment variable (më e lehtë në PowerShell):**
+```powershell
+cd eEcoKosova\backend
+$env:SPRING_PROFILES_ACTIVE="dev"
+mvn spring-boot:run
+```
+
+Ky profile përdor H2 database dhe nuk kërkon SQL Server të ekzekutuar.
+
+**Zgjidhje 2: Starto SQL Server me Docker**
+
+```powershell
+# Në root të projektit
+cd eEcoKosova
+docker-compose up -d mssql
+
+# Prisni 10-20 sekonda, pastaj startoni backend
+cd backend
+mvn spring-boot:run
+```
+
+Për më shumë detaje, shihni `README_DATABASE_SETUP.md`.
+
+### Problema të tjera:
+
 ### Backend nuk starton:
 - Sigurohu që porti 8080 nuk është i zënë
 - Kontrollo: `java -version` (duhet të jetë Java 17+)

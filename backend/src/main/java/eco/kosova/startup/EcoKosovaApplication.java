@@ -2,7 +2,9 @@ package eco.kosova.startup;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.logging.Logger;
@@ -17,6 +19,8 @@ import java.util.logging.Logger;
  */
 @SpringBootApplication
 @ComponentScan(basePackages = "eco.kosova")
+@EntityScan(basePackages = "eco.kosova.infrastructure.persistence.jpa")
+@EnableJpaRepositories(basePackages = "eco.kosova.infrastructure.persistence.jpa")
 @EnableScheduling
 public class EcoKosovaApplication {
     

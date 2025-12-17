@@ -66,7 +66,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     const checkCriticalContainers = async () => {
       try {
-        const allContainers = await getAllContainers();
+        const response = await getAllContainers();
+        const allContainers = response?.content || [];
         const critical = allContainers.filter(c => isCritical(c.fillLevel));
         
         if (critical.length > 0) {

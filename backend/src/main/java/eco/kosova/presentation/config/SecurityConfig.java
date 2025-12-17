@@ -54,7 +54,21 @@ public class SecurityConfig {
                 )
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/monitoring/**", "/api/zones/statistics", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
+                .requestMatchers(
+                    "/api/auth/**", 
+                    "/api/monitoring/**", 
+                    "/api/zones/**",
+                    "/api/routes/**",
+                    "/api/kamionet/**",
+                    "/api/qytetaret/**",
+                    "/api/containers/**",
+                    "/api/ciklet/**",
+                    "/api/reports/**",
+                    "/api/kontroll-panel/**",
+                    "/swagger-ui/**", 
+                    "/v3/api-docs/**", 
+                    "/actuator/**"
+                ).permitAll()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
