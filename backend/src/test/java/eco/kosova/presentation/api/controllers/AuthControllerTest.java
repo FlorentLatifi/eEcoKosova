@@ -1,11 +1,13 @@
 package eco.kosova.presentation.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import eco.kosova.infrastructure.persistence.jpa.UserEntity;
 import eco.kosova.infrastructure.persistence.jpa.UserEntityRepository;
 import eco.kosova.infrastructure.security.JwtTokenProvider;
 import eco.kosova.presentation.dtos.LoginRequest;
 import eco.kosova.presentation.dtos.RegisterRequest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +25,9 @@ import java.util.UUID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+import eco.kosova.startup.EcoKosovaApplication;
+
+@SpringBootTest(classes = EcoKosovaApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
