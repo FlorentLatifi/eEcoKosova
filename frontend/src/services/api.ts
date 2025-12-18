@@ -578,10 +578,15 @@ export interface Qytetari {
   lastUpdated: string;
 }
 
-export const getAllQytetaret = async (): Promise<Qytetari[]> => {
+export const getAllQytetaret = async (
+  page: number = 0,
+  size: number = 50
+): Promise<Qytetari[]> => {
   try {
-    const response = await api.get<Qytetari[]>('/qytetaret');
-    return response.data;
+    const response = await api.get<PagedResponse<Qytetari>>('/qytetaret', {
+      params: { page, size },
+    });
+    return response.data.content;
   } catch (error) {
     handleApiError(error, 'getAllQytetaret');
   }
@@ -706,10 +711,15 @@ export interface CikliMbledhjes {
   lastUpdated: string;
 }
 
-export const getAllCiklet = async (): Promise<CikliMbledhjes[]> => {
+export const getAllCiklet = async (
+  page: number = 0,
+  size: number = 50
+): Promise<CikliMbledhjes[]> => {
   try {
-    const response = await api.get<CikliMbledhjes[]>('/ciklet');
-    return response.data;
+    const response = await api.get<PagedResponse<CikliMbledhjes>>('/ciklet', {
+      params: { page, size },
+    });
+    return response.data.content;
   } catch (error) {
     handleApiError(error, 'getAllCiklet');
   }
