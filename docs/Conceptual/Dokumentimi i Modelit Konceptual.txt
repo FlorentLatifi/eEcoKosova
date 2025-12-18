@@ -1,227 +1,196 @@
-Modeli Konceptual i Sistemit "EcoKosova" (Versioni i Përditësuar)
-Ky model paraqet konceptet kryesore të sistemit të menaxhimit të mbetjeve në Kosovë. Modeli përfshin 13 klasa kryesore që përfaqësojnë:
+Modeli Konceptual i Sistemit EcoKosova
 
-Aktorët: Qytetari, Operatori
-Paisjet: Paisje (abstract), Kontenieri, Kamioni
-Objektet: Zona
-Proceset: CikliMbledhjes, Raporti
-Infrastruktura: KontrollPanel, Konfigurimi, Vendndodhja
-Koha: Ora, EcoKosova (sistemi qendror)
+(Conceptual / Analysis Model)
 
+1. Qëllimi i modelit konceptual
 
-Qëllimi i Modelit
-Ky model konceptual përfaqëson konceptet kryesore dhe marrëdhëniet në sistemin e menaxhimit të mbetjeve "EcoKosova". Modeli fokusohet në konceptet e domain-it dhe të dhënat e përdorura nga sistemi, pa përshkruar implementimin teknik.
+Ky model konceptual paraqet konceptet kryesore të domenit të sistemit EcoKosova, marrëdhëniet midis tyre dhe atributet përkatëse, me qëllim të kuptimit të kërkesave funksionale dhe strukturës së të dhënave që sistemi përdor si input dhe output.
 
-Klasat dhe Konceptet Kryesore
-1. Qytetari
-Përshkrim: Përfaqëson përdoruesit e sistemit që hedhin mbetjet
-Atribute:
+Modeli është ndërtuar në nivel analize, pa përshkruar klasa konkrete të implementimit apo detaje teknike, dhe shërben si bazë për fazat e mëvonshme të dizajnit dhe implementimit.
 
-qytetariID: String - Identifikues unik
-emri: String - Emri i plotë i qytetarit
-adresa: String - Vendbanimi i qytetarit
+2. Përshkrimi i koncepteve kryesore (Classes)
+2.1 Qytetari
 
+Qytetari përfaqëson individin që jeton në një zonë të caktuar dhe ndërvepron me sistemin, duke qenë subjekt i shërbimeve të menaxhimit të mbetjeve.
 
-2. KontrollPanel
-Përshkrim: Ndërfaqa kryesore për ndërveprim me sistemin
-Atribute:
+Atribute kryesore:
 
-panelID: String - Identifikues unik i panelë
-gjuha: String - Gjuha e ndërfaqes (shqip, anglisht)
-temat: Theme - Tema vizuale e ndërfaqes
-gjendjaEkranit: ScreenState - Gjendja aktuale e ekranit
+emri
 
-Asocim: Përdoret nga Qytetari (1:1)
+adresa
 
-3. Ora
-Përshkrim: Përfaqëson kohën dhe datën e sistemit
-Atribute:
+Marrëdhënie:
 
-koha: DateTime - Koha aktuale e ditës
-data: Date - Data aktuale
+Qytetari jeton në një Zonë
 
+Kardinaliteti:
 
-4. EcoKosova
-Përshkrim: Sistemi qendror i menaxhimit të mbetjeve
-Atribute:
+Një qytetar i përket një zone
 
-statusi: StatusType - Gjendja aktuale e sistemit (AKTIV, JOAKTIV, MBYLLUR)
+Një zonë mund të ketë shumë qytetarë
 
+2.2 Zona
 
-5. Paisje (Klasa Bazë - Abstract)
-Përshkrim: Klasa bazë abstrakte për të gjitha paisjet në sistem
-Atribute:
+Zona përfaqëson një njësi gjeografike ose administrative ku organizohet shërbimi i menaxhimit të mbetjeve.
 
-paisjeID: String - Identifikues unik i pajisjes
-emri: String - Emri i pajisjes
-statusi: PaisjeStatus - Statusi operacional
-vendndodhja: Coordinates - Vendndodhja gjeografike
-dataInstalimit: Date - Data e instalimit/blerjes
+Atribute kryesore:
 
-Operacionet:
+emri
 
-getID(): String - Merr identifikuesin
-updateStatus(status): void - Përditëson statusin
+niveli kritik (tregon gjendjen e mbetjeve në zonë)
 
+Marrëdhënie:
 
-6. Kontenieri (extends Paisje)
-Përshkrim: Enët e mbledhjes së mbetjeve (trashëgon nga Paisje)
-Atribute të Trashëguara:
+Zona përmban një ose më shumë Kontenierë
 
-paisjeID: String → përdoret si kontenieriID
-emri: String → emri i kontejnerit
-statusi: PaisjeStatus → operativ/jo-operativ
-vendndodhja: Coordinates → koordinatat GPS
-dataInstalimit: Date → kur u vendos
+Kjo është një marrëdhënie aggregation (part-whole), pasi kontenierët i përkasin zonës, por mund të ekzistojnë edhe në mënyrë të pavarur.
 
-Atribute Specifike:
+Zona është e lidhur me Ciklin e Mbledhjes, i cili përcakton planifikimin e shërbimit.
 
-lloji: String - Lloji i mbetjeve (plastikë, xham, metal, organik)
-niveli: int - Niveli aktual i mbushjes (0-100%)
-kapaciteti: int - Kapaciteti maksimal në litra
-operueshem: boolean - Statusi operacional
-zoneID: String - Zona ku ndodhet
+2.3 Cikli i Mbledhjes
 
-Operacionet:
+Cikli i Mbledhjes përfaqëson planifikimin kohor dhe operacional të mbledhjes së mbetjeve në një zonë të caktuar.
 
-getCurrentFillLevel(): int - Merr nivelin aktual
-isEmpty(): boolean - Kontrollon nëse është bosh
-isFull(): boolean - Kontrollon nëse është plot
+Atribute kryesore:
 
+orari
 
-7. Kamioni (extends Paisje)
-Përshkrim: Automjetet e mbledhjes së mbetjeve (trashëgon nga Paisje)
-Atribute të Trashëguara:
+ditët e mbledhjes
 
-paisjeID: String → përdoret si kamioniID
-emri: String → emri/modeli i kamionit
-statusi: PaisjeStatus → në shërbim/jashtë shërbimi
-vendndodhja: Coordinates → GPS aktual
-dataInstalimit: Date → data e blerjes
+kapaciteti maksimal i mbledhjes
 
-Atribute Specifike:
+Marrëdhënie:
 
-targa: String - Targat e automjetit
-kapaciteti: int - Kapaciteti i kamionit
-operatoriID: String - Operatori i caktuar
+Një cikël i mbledhjes lidhet me një zonë
 
-Operacionet:
+Një zonë mund të ketë një ose më shumë cikle mbledhjeje në periudha të ndryshme
 
-isAvailable(): boolean - Kontrollon disponueshmërinë
-assignToRoute(route): void - Cakton në një rrugë
+2.4 Kontenieri
 
+Kontenieri përfaqëson njësinë fizike ku grumbullohen mbetjet në një zonë të caktuar.
 
-8. CikliMbledhjes
-Përshkrim: Orari dhe parametrat e mbledhjes së mbetjeve
-Atribute:
+Atribute kryesore:
 
-orari: DateTime - Koha e mbledhjes
-kapacitetiMax: int - Kapaciteti maksimal i mbledhjes
-dita: Dita[] - Ditët e javës për mbledhje
+lloji i mbetjeve
 
+niveli aktual i mbushjes
 
-9. Zona
-Përshkrim: Zonat gjeografike të mbledhjes së mbetjeve
-Atribute:
+kapaciteti
 
-zonaID: String - Identifikues unik
-emri: String - Emri i zonës
-niveliKritik: int - Niveli kritik për njoftim (80%)
+gjendja operuese
 
+Marrëdhënie:
 
-10. Konfigurimi
-Përshkrim: Parametrat e konfigurimit të sistemit
-Atribute:
+Kontenieri i përket një Zone (aggregation)
 
-konfigID: String - Identifikues unik i konfigurimit
-parametrat: Map<String, String> - Parametra të personalizuar
-verzioni: String - Versioni i konfigurimit
-dataKrijimit: Date - Kur u krijua konfigurimi
+Kontenieri monitorohet nga një Pajisje
 
+Kontenieri kontrollohet dhe menaxhohet përmes raporteve operative
 
-11. Vendndodhja
-Përshkrim: Vendndodhjet fizike të kontenierëve
-Atribute:
+2.5 Pajisja
 
-emri: String - Emri i vendndodhjes
-koordinata: String - Koordinatat gjeografike
+Pajisja përfaqëson pajisjet teknologjike të instaluara për monitorimin dhe kontrollin e kontenierëve.
 
+Atribute kryesore:
 
-12. Operatori
-Përshkrim: Personeli operativ i sistemit
-Atribute:
+emri
 
-operatoriID: String - Identifikues unik
-emri: String - Emri i operatorit
+statusi
 
+vendndodhja
 
-13. Raporti
-Përshkrim: Raportet e gjeneruara nga sistemi
-Atribute:
+data e instalimit
 
-raportiID: String - Identifikues unik
-data: Date - Data e gjenerimit
-pershkrimi: String - Përshkrimi i raportit
+Marrëdhënie:
 
+Një pajisje monitoron një ose më shumë kontenierë
 
-Marrëdhëniet dhe Multipliciteti
-Marrëdhënie Trashëgimi (Inheritance):
-Paisje ◁━━━ Kontenieri
+Pajisja është e lidhur me një vendndodhje fizike
 
-Kontenieri është një lloj specifik i Paisjes
+2.6 Vendndodhja
 
-Paisje ◁━━━ Kamioni
+Vendndodhja përfaqëson informacionin gjeografik ose fizik të një elementi të sistemit.
 
-Kamioni është një lloj specifik i Paisjes
+Atribute kryesore:
 
+emri
 
-Marrëdhënie Agregimi (Part-Whole):
-EcoKosova ◇━━━ Paisje (1..*)
+koordinatat
 
-Sistemi menaxhon pajisje të shumta (kontejnerë dhe kamionë)
+Marrëdhënie:
 
-CikliMbledhjes ◇━━━ Konfigurimi (1..n)
+Vendndodhja përdoret për të identifikuar pozicionin e pajisjeve dhe mjeteve operative
 
-Cikli specifikon konfigurime të ndryshme
+2.7 Operatori
 
-Konfigurimi ◇━━━ Vendndodhja (1..1)
+Operatori përfaqëson personelin përgjegjës për mbledhjen dhe menaxhimin e mbetjeve.
 
-Konfigurimi ka një vendndodhje
+Atribute kryesore:
 
+kapaciteti maksimal i punës
 
-Marrëdhënie Kompozimi (Strong Part-Whole):
-Zona ◆━━━ Kontenieri (1..*)
+Marrëdhënie:
 
-Zona përmban kontejnerë të shumtë
+Operatori drejton një ose më shumë Kamionë
 
-EcoKosova ◆━━━ CikliMbledhjes (1..1)
+Operatori është përgjegjës për ekzekutimin e cikleve të mbledhjes
 
-Sistemi ekzekuton një cikël mbledhjeje
+2.8 Kamioni
 
+Kamioni përfaqëson mjetin që përdoret për transportimin e mbetjeve gjatë procesit të mbledhjes.
 
-Marrëdhënie Asocimi:
-Qytetari ──── KontrollPanel (1..1)
+Atribute kryesore:
 
-Qytetari përdor kontrollpanel
+kapaciteti
 
-KontrollPanel ──── EcoKosova (1..1)
+Marrëdhënie:
 
-Kontrollpanel kontrollon sistemin
+Kamioni drejtohet nga një Operator
 
-Operatori ──── Kamioni (1..1)
+Kamioni përdoret gjatë realizimit të cikleve të mbledhjes
 
-Operatori drejton kamion
+2.9 Raporti
 
-Vendndodhja ──── Kamioni (1..1)
+Raporti përfaqëson dokumentimin e aktiviteteve të sistemit dhe gjendjes së operacioneve.
 
-Vendndodhja kontrollon kamion
+Atribute kryesore:
 
-Kamioni ──── Raporti (1..*)
+data
 
-Kamioni gjeneron raporte
+përshkrimi
 
-Ora ──── Raporti (1..*)
+Marrëdhënie:
 
-Ora gjeneron raporte
+Një raport gjenerohet nga aktivitetet operative
 
-Ora ──── EcoKosova (1..1)
+Një operator mund të gjenerojë shumë raporte
+
+3. Marrëdhëniet kryesore në model
+
+Qytetari – Zona: jeton në
+
+Zona – Kontenieri: aggregation (përmban)
+
+Zona – Cikli i Mbledhjes: planifikon
+
+Kontenieri – Pajisja: monitorohet nga
+
+Operatori – Kamioni: drejton
+
+Operatori – Raporti: gjeneron
+
+Të gjitha marrëdhëniet janë të shënuara me kardinalitete të përshtatshme për të reflektuar realitetin e domenit.
+
+4. Përfundim
+
+Ky model konceptual:
+
+përmban 9 klasa, në përputhje me kërkesën e projektit
+
+përdor UML class diagram notation
+
+përfshin atribute dhe marrëdhënie konceptuale
+
+përdor aggregation për marrëdhënie part-whole
+
+fokusohet në kërkesa dhe koncepte, jo në implementim
