@@ -19,6 +19,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.logging.Logger;
 
 /**
@@ -146,6 +147,7 @@ public class DataInitializer implements CommandLineRunner {
         Coordinates depo = new Coordinates(42.6660, 21.1600);
         Instant now = Instant.now();
 
+        // Përdorim ditë në vend të viteve/muajve, pasi Instant nuk mbështet direkt YEARS/MONTHS
         Kamioni k1 = new Kamioni(
             "TRUCK-001",
             "Kamioni 1",
@@ -153,7 +155,7 @@ public class DataInitializer implements CommandLineRunner {
             12000,
             depo,
             "OP-001",
-            now.minusYears(1)
+            now.minus(365, ChronoUnit.DAYS)
         );
 
         Kamioni k2 = new Kamioni(
@@ -163,7 +165,7 @@ public class DataInitializer implements CommandLineRunner {
             15000,
             depo,
             "OP-002",
-            now.minusMonths(6)
+            now.minus(180, ChronoUnit.DAYS)
         );
 
         kamioniRepository.saveAll(java.util.List.of(k1, k2));
