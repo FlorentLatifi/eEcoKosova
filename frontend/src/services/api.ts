@@ -69,13 +69,14 @@ api.interceptors.response.use(
 
 // Error type për më mirë error handling
 export class ApiError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-    public data?: any
-  ) {
+  status?: number;
+  data?: any;
+
+  constructor(message: string, status?: number, data?: any) {
     super(message);
     this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
   }
 }
 
@@ -137,7 +138,7 @@ export interface Report {
 }
 
 // Helper function për të handle errors në mënyrë konsistente
-const handleApiError = (error: unknown, context: string): never => {
+export function handleApiError(error: unknown, context: string): never {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError;
 
@@ -168,7 +169,7 @@ const handleApiError = (error: unknown, context: string): never => {
     );
   }
   throw new ApiError(`Unexpected error in ${context}`);
-};
+}
 
 // Pagination types
 export interface PagedResponse<T> {

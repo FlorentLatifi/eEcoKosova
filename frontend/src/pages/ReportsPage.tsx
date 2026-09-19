@@ -4,11 +4,7 @@ import {
   Download,
   Calendar,
   Activity,
-  AlertTriangle,
-  CheckCircle,
-  TrendingUp,
   RefreshCw,
-  Map,
 } from "lucide-react";
 import { getReports, generateReport, type Report, ApiError } from "../services/api";
 import { useToast } from "../context/ToastContext";

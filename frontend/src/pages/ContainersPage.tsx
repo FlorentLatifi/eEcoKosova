@@ -15,7 +15,7 @@ import EditContainerModal from "../components/EditContainerModal";
 import DeleteContainerModal from "../components/DeleteContainerModal";
 
 const ContainersPage: React.FC = () => {
-  const { containers, loading, statistics, refresh } = useContainers(30000);
+  const { containers, statistics, refresh } = useContainers(30000);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedContainer, setSelectedContainer] = useState<Container | null>(

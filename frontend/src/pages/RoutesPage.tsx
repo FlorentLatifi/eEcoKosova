@@ -6,13 +6,12 @@ import {
   Navigation,
   Activity,
   TrendingUp,
-  Map,
   RefreshCw,
   AlertCircle,
 } from "lucide-react";
 import { getAllRoutes, getRouteForZone, getZoneStatistics, type Route as RouteType, type ZoneStatistics } from "../services/api";
 import RouteDetailsModal from "../components/RouteDetailsModal";
-import { isCritical, isWarning, getStatusBadge } from "../utils/thresholdUtils";
+import { getStatusBadge } from "../utils/thresholdUtils";
 
 const RoutesPage: React.FC = () => {
   const [routes, setRoutes] = useState<RouteType[]>([]);

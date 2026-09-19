@@ -1,5 +1,4 @@
-import { api } from './api';
-import { ApiError, handleApiError } from './api';
+import api, { handleApiError } from './api';
 
 export interface LoginRequest {
   username: string;

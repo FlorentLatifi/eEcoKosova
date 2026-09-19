@@ -6,7 +6,6 @@ import {
   createKamioni,
   updateKamioni,
   deleteKamioni,
-  assignRouteToKamioni,
   releaseRouteFromKamioni,
   type Kamioni,
   ApiError,
@@ -73,17 +72,6 @@ const KamioniPage: React.FC = () => {
       fetchKamionet();
     } catch (error) {
       const message = error instanceof ApiError ? error.message : 'Dështoi fshirja';
-      showError(message);
-    }
-  };
-
-  const handleAssignRoute = async (id: string, routeId: string, containerIds: string[]) => {
-    try {
-      await assignRouteToKamioni(id, routeId, containerIds);
-      showSuccess('Rruga u caktua me sukses!');
-      fetchKamionet();
-    } catch (error) {
-      const message = error instanceof ApiError ? error.message : 'Dështoi caktimi i rrugës';
       showError(message);
     }
   };
