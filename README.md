@@ -1,223 +1,136 @@
-# 🌿 EcoKosova - Waste Management System
+# EcoKosova: waste management system
 
-Sistema inteligjente për menaxhimin e mbeturinave në Kosovë, e ndërtuar me Domain-Driven Design dhe Layered Architecture.
+[Shqip](README.sq.md)
 
-## 📋 Përmbledhje
+A web system for managing waste collection in Kosovo. Operators see the fill level of every container, get alerted when containers are full, plan collection cycles, assign routes to trucks and generate reports.
 
-EcoKosova është një sistem modern që mundëson:
+Built as a team project for the Software Architecture & Design course at UBT (2024–2025), using domain-driven design and a layered architecture.
 
-- ♻️ Monitorim në kohë reale të kontejnerëve të mbeturinave
-- 🔔 Njoftime automatike për kontejnerët e mbushur
-- 🚛 Optimizim të rrugëve të mbledhjes
-- 📊 Raporte dhe analiza operacionale
-- 🗺️ Vizualizim interaktiv përmes web dashboard
+## Features
 
-## 🏗️ Arkitektura
+- Container monitoring by zone, with critical containers flagged
+- Collection cycles and truck route assignment
+- Collection routes per zone
+- Operational reports
+- Map view of containers
+- JWT authentication
 
-### Layered Architecture (5 Shtresa)
+## Architecture
+
+Five layers:
 
 ```
 ┌─────────────────────────┐
-│   Startup Layer         │
+│   Startup               │  ← dependency injection, wiring
 ├─────────────────────────┤
-│   Presentation Layer    │  ← REST API
+│   Presentation          │  ← REST API
 ├─────────────────────────┤
-│   Application Layer     │  ← CQRS Commands/Queries
+│   Application           │  ← CQRS commands and queries
 ├─────────────────────────┤
-│   Domain Layer          │  ← Business Logic (DDD)
+│   Domain                │  ← business logic (DDD)
 ├─────────────────────────┤
-│   Infrastructure Layer  │  ← Persistence & Events
+│   Infrastructure        │  ← persistence and events
 └─────────────────────────┘
 ```
 
-### Domain-Driven Design
+**Domain-driven design**
 
-- **Bounded Contexts:** Monitoring, Collection, Reporting
-- **Aggregates:** Kontenier, Zone
-- **Value Objects:** FillLevel, Coordinates
-- **Domain Events:** ContainerFullEvent, CollectionScheduledEvent
+- Bounded contexts: Monitoring, Collection, Reporting
+- Aggregates: Container, Zone
+- Value objects: FillLevel, Coordinates
+- Domain events: ContainerFullEvent, CollectionScheduledEvent
 
-## 🎯 Design Patterns
+**Patterns:** Repository, CQRS, Observer (domain events), Factory, Strategy (route optimisation), DTOs at the API boundary.
 
-✅ **Repository Pattern** - Data access abstraction  
-✅ **Command Pattern (CQRS)** - Separation of reads and writes  
-✅ **Observer Pattern** - Domain Events  
-✅ **Factory Pattern** - Object creation  
-✅ **Strategy Pattern** - Route optimization algorithms  
-✅ **DTO Pattern** - API data transfer
+## Tech stack
 
-## 🛠️ Teknologjitë
+| | |
+|---|---|
+| Backend | Java 17, Spring Boot 3.2 (Web, Data JPA, Security, Validation, Actuator), JWT, Flyway |
+| Database | SQL Server; H2 for tests |
+| API docs | springdoc OpenAPI (Swagger UI) |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, React Router, React Hook Form + Zod, Axios, Leaflet |
+| Tooling | Maven, JUnit 5, Docker Compose, GitHub Actions |
 
-### Backend
+## Getting started
 
-- **Java 17** - Core language
-- **Spring Boot 3.2** - REST API framework
-- **Maven** - Build tool
-- **Gson** - JSON serialization
-- **JUnit 5** - Testing
-
-### Frontend
-
-- **React 18** - UI framework
-- **Tailwind CSS** - Styling
-- **Axios** - HTTP client
-- **Lucide React** - Icons
-
-## 📁 Struktura e Projektit
-
-```
-ecokosova/
-├── backend/              # Java Spring Boot
-│   ├── src/main/java/eco/kosova/
-│   │   ├── domain/       # Domain Layer (DDD)
-│   │   ├── application/  # Application Layer (CQRS)
-│   │   ├── infrastructure/ # Infrastructure Layer
-│   │   ├── presentation/ # REST API Controllers
-│   │   └── startup/      # Dependency Injection
-│   └── src/main/resources/
-│       └── data/         # JSON data files
-│
-├── frontend/             # React App
-│   └── src/
-│       ├── components/   # UI Components
-│       ├── services/     # API Services
-│       └── hooks/        # Custom Hooks
-│
-└── README.md
-```
-
-## 🚀 Instalimi dhe Ekzekutimi
-
-### Prerequisites
-
-- Java 17+
-- Maven 3.8+
-- Node.js 18+
-- npm 9+
-- MSSQL Server (ose Docker me SQL Server)
-
-### Backend Setup
+### Everything with Docker
 
 ```bash
-# Navigate to backend
+cp .env.example .env
+```
+
+Set your own passwords in `.env`, then:
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| SQL Server | localhost:1433 |
+
+### Backend only
+
+Requires Java 17+, Maven 3.8+ and a running SQL Server. The backend reads `SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD` from the environment.
+
+```bash
 cd backend
-
-# Full build me teste
-mvn -DskipTests=false clean package
-
-# Ose gjatë zhvillimit (pa teste)
-mvn clean install
-
-# Run application
+mvn clean package
 mvn spring-boot:run
 ```
 
-Backend do të startohet në: `http://localhost:8080`
+### Frontend only
 
-#### Konfigurimi i databazës (MSSQL)
-
-- `backend/src/main/resources/application.properties` përdor variabla mjedisi:
-  - `SPRING_DATASOURCE_USERNAME` (default `sa`)
-  - `SPRING_DATASOURCE_PASSWORD` (pa default – duhet vendosur)
-- Për development, mund të krijosh një file `.env` (mos e commito) duke u bazuar në `docker-compose.yml`, p.sh.:
+Requires Node.js 20.19+.
 
 ```bash
-MSSQL_SA_PASSWORD=ChangeThisStrongPassword123!
-SPRING_DATASOURCE_USERNAME=sa
-SPRING_DATASOURCE_PASSWORD=ChangeThisStrongPassword123!
-```
-
-Spring Boot do të lexojë këto si environment variables kur starton në Docker.
-
-### Frontend Setup
-
-```bash
-# Navigate to frontend
 cd frontend
-
-# Install dependencies
 npm install
-
-# Build për production
-npm run build
-
-# Run development server
 npm run dev
 ```
 
-Frontend do të startohet në: `http://localhost:3000`
+## API
 
-## 🗄️ Startimi i plotë me Docker (backend + frontend + MSSQL)
+| Base path | What it covers |
+|---|---|
+| `/api/auth` | Login and registration |
+| `/api/monitoring/containers` | Fill levels, critical containers, containers by zone |
+| `/api/containers` | Create, update and delete containers; schedule collection; mark emptied |
+| `/api/zones` | Zones and zone statistics |
+| `/api/routes` | Collection routes per zone |
+| `/api/ciklet` | Collection cycles |
+| `/api/kamionet` | Trucks and route assignment |
+| `/api/reports` | Generate and read reports |
+| `/api/qytetaret` | Citizens |
+| `/api/kontroll-panel` | Citizen control panels |
 
-```bash
-docker-compose up --build
-```
+Full, interactive documentation is in Swagger UI.
 
-- MSSQL ruan fajllat në folderin `mssql-data/` në root të projektit.
-- Backend lidhet me databazën `EcoKosova` në MSSQL duke përdorur variablat e mjedisit të konfiguruara.
-
-## 📡 API Endpoints
-
-### Containers
-
-- `GET /api/containers` - Merr të gjitha kontejnerët
-- `GET /api/containers/{id}` - Merr një kontejner specifik
-- `PUT /api/containers/{id}/fill-level` - Përditëson nivelin e mbushjes
-
-### Zones
-
-- `GET /api/zones` - Merr të gjitha zonat
-- `GET /api/zones/{id}/containers` - Merr kontejnerët e një zone
-
-### Alerts
-
-- `GET /api/alerts` - Merr njoftime aktive
-- `GET /api/alerts/critical` - Merr vetëm njoftime kritike
-
-### Reports
-
-- `POST /api/reports/generate` - Gjeneron raport të ri
-- `GET /api/reports/{id}` - Merr raport specifik
-
-## 🧪 Testing
+## Tests
 
 ```bash
-# Run all tests
+cd backend
 mvn test
-
-# Run tests with coverage
-mvn test jacoco:report
 ```
 
-## 👥 Ekipi Zhvillues
+CI builds and tests the backend and builds the frontend on every push to `main`.
 
-- **Prof:** Greta Ahma
-- **Studentët:**
-  - Diell Ajeti
-  - Isa Bilalli
-  - Florent Latifi
-  - Shefket Dalipi
+## Team
 
-## 📚 Dokumentacioni
+- **Professor:** Greta Ahma
+- **Students:** Diell Ajeti, Isa Bilalli, Florent Latifi, Shefket Dalipi
 
-- **SAD (Software Architecture Document)**: `docs/SAD/SADEcoKosova.docx`
-- **Detailed Design (DDD)**: `docs/DDD/DDD EcoKosova Waste Management System (1).docx`
-- **Conceptual Model**: `docs/Conceptual/Dokumentimi i Modelit Konceptual.txt` dhe `docs/Conceptual/EcoKosova - Conceptual Model.drawio`
-- **Demo & skenarë testimi**: `docs/DEMO.md`
-- **Guides teknike** (në root):
-  - `START_GUIDE.md` – si të startosh backend + frontend
-  - `HOW_TO_START.md` – version i shkurtuar i komandave kryesore
-  - `CRUD_IMPLEMENTIMI.md` – përmbledhje e CRUD endpoints + mapping backend/frontend
-  - `INTEGRIMI_END_TO_END.md` – integrimi komplet frontend-backend-DB
-  - `DEMONSTRIMI_I_PROJEKTIT.md` – udhëzime për demonstrim
-  - `STATUS_IMPLEMENTIMI.md` – status i kërkesave dhe implementimeve
+## Documentation
 
-## 📄 Licenca
+- Software Architecture Document: `docs/SAD/`
+- Detailed design: `docs/DDD/`
+- Conceptual model: `docs/Conceptual/`
+- Demo and test scenarios: `docs/DEMO.md` (Albanian)
 
-Ky projekt është zhvilluar për qëllime akademike në UBT - University for Business and Technology.
+## License
 
----
-
-**Viti Akademik:** 2024-2025  
-**Lënda:** Software Architecture & Design  
-**Institucioni:** UBT - Kolegji për Shkenca Kompjuterike dhe Inxhinieri
+Academic project developed at UBT – University for Business and Technology.
